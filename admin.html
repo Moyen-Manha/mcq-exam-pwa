@@ -18,18 +18,21 @@
             <h1 class="text-2xl font-bold text-slate-800">ExamPrep AI এডমিন প্যানেল (SSC 2027)</h1>
         </div>
 
+        <!-- PIN Protection -->
         <div id="pinBox" class="space-y-3">
             <p class="text-sm text-slate-600">এডমিন পেজে ঢুকতে গোপন পিন লিখুন:</p>
             <input type="password" id="adminPin" placeholder="পিন লিখুন (Default: 1234)" class="w-full p-2.5 border rounded-xl text-sm">
             <button onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl font-bold">প্রবেশ করুন</button>
         </div>
 
+        <!-- Dashboard -->
         <div id="adminContent" class="hidden space-y-8">
             <div class="flex bg-slate-100 p-1 rounded-xl">
                 <button onclick="switchAdminTab('students')" id="tabStudentsBtn" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow">পেমেন্ট রিকোয়েস্ট</button>
                 <button onclick="switchAdminTab('aiGenerator')" id="tabAiBtn" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600">✨ AI প্রশ্ন জেনারেটর</button>
             </div>
 
+            <!-- Tab 1: Students -->
             <div id="tabStudentsSection" class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h2 class="font-bold text-slate-700">আবেদনকারীদের তালিকা</h2>
@@ -38,6 +41,7 @@
                 <div id="studentList" class="space-y-3"><p class="text-xs text-slate-400">লোডিং...</p></div>
             </div>
 
+            <!-- Tab 2: AI Question Generator -->
             <div id="tabAiSection" class="hidden space-y-6">
                 <h2 class="font-bold text-slate-700 text-lg border-b pb-2">বোর্ড স্ট্যান্ডার্ড AI প্রশ্ন জেনারেটর</h2>
                 
@@ -72,6 +76,7 @@
                     </button>
                 </form>
 
+                <!-- Review Container -->
                 <div id="reviewContainer" class="hidden space-y-4 bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <div class="flex justify-between items-center border-b border-amber-200 pb-2">
                         <h3 class="font-bold text-amber-900 text-sm">AI জেনারেটেড প্রশ্ন (রিভিউ ও এডিট করুন)</h3>
@@ -123,9 +128,13 @@
             if(type === 'students') {
                 document.getElementById('tabStudentsSection').classList.remove('hidden');
                 document.getElementById('tabAiSection').classList.add('hidden');
+                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
+                document.getElementById('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
             } else {
                 document.getElementById('tabStudentsSection').classList.add('hidden');
                 document.getElementById('tabAiSection').classList.remove('hidden');
+                document.getElementById('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
+                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
             }
         }
 
@@ -166,20 +175,20 @@
             const btn = document.getElementById('btnGenerate');
 
             btn.disabled = true;
-            btn.innerText = "⏳ প্রশ্ন তৈরি হচ্ছে...";
+            btn.innerText = "⏳ AI প্রশ্ন তৈরি করছে...";
 
-            // Board-standard prompt including knowledge, application, and multi-statement MCQs
-            const prompt = `You are an expert SSC 2027 Question Setter following Bangladesh NCTB Curriculum.
-Generate ${qCount} MCQs in Bengali based on: "${context}".
-Must include:
-1. Knowledge, Understanding, and Application level questions.
-2. Poly-statement questions (বহুপদী সমাপ্তিসূচক প্রশ্ন) with format like: "i. ... ii. ... iii. ..." and options like "K. i ও ii", "Kh. ii ও iii", etc.
+            const prompt = `You are an expert SSC 2027 MCQ question maker following NCTB Bangladesh curriculum.
+Generate ${qCount} MCQs in Bengali based on this info/topic: "${context}".
+Include:
+- Knowledge and application level questions
+- Poly-statement questions (বহুপদী সমাপ্তিসূচক প্রশ্ন)
 
-Output MUST strictly be JSON array:
+Respond ONLY with a valid JSON array, no extra commentary or markdown syntax.
+Format:
 [
   {
     "q": "প্রশ্নটি এখানে লিখুন",
-    "options": ["অপশন ক", "অপশন খ", "অপশন গ", "অপশন ঘ"],
+    "options": ["ক. অপশন ১", "খ. অপশন ২", "গ. অপশন ৩", "ঘ. অপশন ৪"],
     "ans": 0
   }
 ]`;
@@ -195,13 +204,28 @@ Output MUST strictly be JSON array:
                 });
 
                 const resData = await response.json();
-                let replyText = resData.candidates[0].content.parts[0].text;
-                replyText = replyText.replace(/```json|```/g, '').trim();
-                generatedQuestionsData = JSON.parse(replyText);
 
+                // Safe parsing logic
+                if (!resData.candidates || !resData.candidates[0] || !resData.candidates[0].content) {
+                    if (resData.error) throw new Error(resData.error.message);
+                    throw new Error("AI থেকে কোনো উত্তর পাওয়া যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।");
+                }
+
+                let replyText = resData.candidates[0].content.parts[0].text;
+                
+                // Extract only the JSON array [] part safely
+                const jsonMatch = replyText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+                if (jsonMatch) {
+                    replyText = jsonMatch[0];
+                } else {
+                    replyText = replyText.replace(/```json|```/g, '').trim();
+                }
+
+                generatedQuestionsData = JSON.parse(replyText);
                 renderQuestionsForReview();
+
             } catch (err) {
-                alert("ত্রুটি: " + err.message);
+                alert("প্রশ্ন তৈরিতে ত্রুটি ঘটেছে: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "✨ বোর্ড মানের প্রশ্ন তৈরি করুন";
@@ -211,16 +235,21 @@ Output MUST strictly be JSON array:
         function renderQuestionsForReview() {
             const container = document.getElementById('aiQuestionsList');
             document.getElementById('reviewContainer').classList.remove('hidden');
-            document.getElementById('genCountBadge').innerText = `${generatedQuestionsData.length}টি প্রশ্ন`;
+            document.getElementById('genCountBadge').innerText = `${generatedQuestionsData.length}টি প্রশ্ন তৈরি হয়েছে`;
 
             let html = "";
             generatedQuestionsData.forEach((qObj, index) => {
                 html += `
                     <div class="bg-white p-3 rounded-xl border border-amber-200 text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-800">প্রশ্ন ${index + 1}:</span>
+                            <button onclick="removeQuestion(${index})" class="text-red-500 font-bold hover:underline">ডিলিট</button>
+                        </div>
                         <textarea onchange="generatedQuestionsData[${index}].q = this.value" class="w-full p-2 border rounded-lg font-semibold text-slate-800" rows="2">${qObj.q}</textarea>
                         <div class="grid grid-cols-2 gap-2">
                             ${qObj.options.map((opt, oIdx) => `
                                 <div>
+                                    <label class="text-[10px] text-slate-500">অপশন ${oIdx+1}${qObj.ans === oIdx ? '✅' : ''}</label>
                                     <input type="text" value="${opt}" onchange="generatedQuestionsData[${index}].options[${oIdx}] = this.value" class="w-full p-1.5 border rounded-lg ${qObj.ans === oIdx ? 'bg-green-50 font-bold border-green-500' : ''}">
                                 </div>
                             `).join('')}
@@ -231,7 +260,14 @@ Output MUST strictly be JSON array:
             container.innerHTML = html;
         }
 
+        function removeQuestion(index) {
+            generatedQuestionsData.splice(index, 1);
+            renderQuestionsForReview();
+        }
+
         async function saveApprovedQuestions() {
+            if(generatedQuestionsData.length === 0) return alert("কোনো প্রশ্ন নেই!");
+
             const subjectTitle = document.getElementById('subjectTitle').value.trim();
             const timeLimit = parseInt(document.getElementById('timeLimit').value) || 25;
             const marksPerQ = parseFloat(document.getElementById('marksPerQ').value) || 1;
@@ -246,29 +282,40 @@ Output MUST strictly be JSON array:
                 updatedAt: new Date()
             });
 
-            alert(`"${subjectTitle}" সেভ করা হয়েছে!`);
+            alert(`"${subjectTitle}" বিষয়ের পরীক্ষাটি সফলভাবে ফায়ারবেসে সেভ করা হয়েছে!`);
             document.getElementById('reviewContainer').classList.add('hidden');
-            loadExams();
+                loadExams();
         }
 
         function loadExams() {
             const list = document.getElementById('examList');
             db.collection('exams').get().then(snapshot => {
+                if(snapshot.empty) {
+                    list.innerHTML = "<p class='text-xs text-slate-400'>ডাটাবেজে কোনো বিষয় সেভ নেই।</p>";
+                    return;
+                }
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    const qCount = data.questions ? data.questions.length : 0;
                     html += `
                         <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
                             <div>
                                 <span class="font-bold text-slate-800 text-sm">${data.title}</span>
-                                <p class="text-slate-500">সময়: ${data.timeLimit} মিনিট | প্রশ্ন: ${data.questions.length}টি</p>
+                                <p class="text-slate-500 mt-0.5">সময়: ${data.timeLimit} মিনিট | প্রশ্ন: ${qCount} টি | নম্বর/প্রশ্ন: ${data.marksPerQ}</p>
                             </div>
-                            <button onclick="db.collection('exams').doc('${doc.id}').delete().then(()=>loadExams())" class="text-red-500 hover:underline">মুছে ফেলুন</button>
+                            <button onclick="deleteExam('${doc.id}')" class="text-red-500 hover:underline font-bold">মুছে ফেলুন</button>
                         </div>
                     `;
                 });
                 list.innerHTML = html;
             });
+        }
+
+        function deleteExam(id) {
+            if(confirm("আপনি কি এই বিষয়টি মুছে ফেলতে চান?")) {
+                db.collection('exams').doc(id).delete().then(() => loadExams());
+            }
         }
     </script>
 </body>
