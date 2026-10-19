@@ -1,0 +1,16 @@
+{
+  "name": "ExamPrep AI - MCQ Exam",
+  "short_name": "ExamPrep",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

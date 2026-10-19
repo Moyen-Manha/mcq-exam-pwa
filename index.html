@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রফেশনাল এক্সাম পোর্টাল</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font (Hind Siliguri) -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-white text-blue-600 font-bold rounded-lg flex items-center justify-center text-lg">E</div>
+                <h1 class="text-xl font-bold tracking-wide">ExamPrep AI</h1>
+            </div>
+            <span id="userStatus" class="text-xs bg-blue-700 px-2.5 py-1 rounded-full text-blue-100">গেস্ট ইউজার</span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-md mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- Screen 1: Registration & Payment -->
+        <div id="paymentScreen" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <div class="text-center mb-6">
+                <span class="inline-block p-3 bg-blue-50 text-blue-600 rounded-full mb-2">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6205.291M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </span>
+                <h2 class="text-2xl font-bold text-slate-900">৩টি বিশেষ পরীক্ষা মডেল টেস্ট</h2>
+                <p class="text-slate-500 text-sm mt-1">মাত্র ৫০ টাকায় অংশ নিন এবং নিজেকে যাচাই করুন</p>
+            </div>
+
+            <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-4 mb-6">
+                <h3 class="font-semibold text-blue-900 text-sm mb-2">পেমেন্ট করার উপায়:</h3>
+                <p class="text-xs text-blue-800 mb-1">১. আমাদের বিকাশ/নগদ নাম্বার: <span class="font-bold">01700000000</span> (Personal)</p>
+                <p class="text-xs text-blue-800">২. ৫০ টাকা Send Money করে নিচের বক্সে আপনার মোবাইল ও TrxID দিন।</p>
+            </div>
+
+            <form id="payForm" onsubmit="handlePayment(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">আপনার নাম</label>
+                    <input type="text" id="userName" required placeholder="উদাহরণ: সাকিল আহমেদ" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল নম্বর</label>
+                    <input type="tel" id="userPhone" required placeholder="017XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">বিকাশ/নগদ TrxID</label>
+                    <input type="text" id="trxId" required placeholder="যেমন: 8N7A6D5E" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-500/20 transition text-sm">
+                    পেমেন্ট নিশ্চিত করুন ও পরীক্ষা শুরু করুন
+                </button>
+            </form>
+        </div>
+
+        <!-- Screen 2: Exam Dashboard -->
+        <div id="examDashboard" class="hidden space-y-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <h2 id="welcomeText" class="font-bold text-slate-900">স্বাগতম!</h2>
+                    <p class="text-xs text-slate-500">আপনার জন্য ৩টি পরীক্ষা নির্ধারিত আছে</p>
+                </div>
+                <span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-semibold">এক্টিভ প্যাকেজ</span>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-slate-800 text-sm">পরীক্ষা ১: সাধারণ জ্ঞান ও এআই</h3>
+                        <p class="text-xs text-slate-500">সময়: ৩ মিনিট | প্রশ্ন: ৩টি</p>
+                    </div>
+                    <button onclick="startExam(1)" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">শুরু করুন</button>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-slate-800 text-sm">পরীক্ষা ২: গণিত ও যুক্তি</h3>
+                        <p class="text-xs text-slate-500">সময়: ৩ মিনিট | প্রশ্ন: ৩টি</p>
+                    </div>
+                    <button onclick="startExam(2)" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">শুরু করুন</button>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-slate-800 text-sm">পরীক্ষা ৩: বাংলা ও ইংরেজি</h3>
+                        <p class="text-xs text-slate-500">সময়: ৩ মিনিট | প্রশ্ন: ৩টি</p>
+                    </div>
+                    <button onclick="startExam(3)" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">শুরু করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 3: Live MCQ Exam Screen -->
+        <div id="mcqScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <div class="flex justify-between items-center pb-4 mb-4 border-b border-slate-100">
+                <span id="questionCount" class="text-xs font-bold text-blue-600">প্রশ্ন ১/৩</span>
+                <div class="flex items-center gap-1 text-red-500 font-bold text-sm bg-red-50 px-3 py-1 rounded-full">
+                    <span>⏱️</span>
+                    <span id="timer">03:00</span>
+                </div>
+            </div>
+
+            <div id="questionContainer" class="space-y-4">
+                <!-- Question & Options populated via JS -->
+            </div>
+
+            <button onclick="nextQuestion()" class="w-full mt-6 bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition text-sm">
+                পরবর্তী প্রশ্ন
+            </button>
+        </div>
+
+        <!-- Screen 4: Result Screen -->
+        <div id="resultScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">🏆</div>
+            <h2 class="text-2xl font-bold text-slate-900">পরীক্ষা সম্পন্ন হয়েছে!</h2>
+            <p class="text-slate-500 text-sm mt-1">আপনার অর্জিত ফলাফল নিচে দেওয়া হলো</p>
+            
+            <div class="bg-slate-50 p-4 rounded-xl my-6">
+                <span class="text-xs text-slate-500 block mb-1">মোট স্কোর</span>
+                <span id="scoreText" class="text-3xl font-extrabold text-blue-600">০/৩</span>
+            </div>
+
+            <button onclick="backToDashboard()" class="w-full bg-slate-900 text-white font-semibold py-3 rounded-xl hover:bg-slate-800 transition text-sm">
+                ড্যাশবোর্ডে ফিরে যান
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+        &copy; 2026 ExamPrep PWA App • স্বয়ংক্রিয় এআই সিস্টেম
+    </footer>
+
+    <!-- App Javascript Logic -->
+    <script>
+        // Sample Questions Dataset
+        const sampleQuestions = [
+            {
+                q: "বাংলাদেশের জাতীয় ফল কোনটি?",
+                options: ["আম", "কাঁঠাল", "লিচু", "কলা"],
+                ans: 1
+            },
+            {
+                q: "AI এর পূর্ণরূপ কী?",
+                options: ["Automated Intelligence", "Artificial Intelligence", "Active Integration", "None"],
+                ans: 1
+            },
+            {
+                q: "২ + ২ × ২ = কত?",
+                options: ["৬", "৮", "৪", "১০"],
+                ans: 0
+            }
+        ];
+
+        let currentQIndex = 0;
+        let score = 0;
+        let selectedAnswers = [];
+
+        function handlePayment(e) {
+            e.preventDefault();
+            const name = document.getElementById('userName').value;
+            document.getElementById('userStatus').innerText = "এক্টিভ ইউজার";
+            document.getElementById('welcomeText').innerText = `স্বাগতম, ${name}!`;
+            document.getElementById('paymentScreen').classList.add('hidden');
+            document.getElementById('examDashboard').classList.remove('hidden');
+        }
+
+        function startExam(id) {
+            currentQIndex = 0;
+            score = 0;
+            selectedAnswers = [];
+            document.getElementById('examDashboard').classList.add('hidden');
+            document.getElementById('mcqScreen').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const qData = sampleQuestions[currentQIndex];
+            document.getElementById('questionCount').innerText = `প্রশ্ন ${currentQIndex + 1}/${sampleQuestions.length}`;
+            
+            let html = `<h3 class="font-bold text-slate-800 text-base mb-3">${qData.q}</h3><div class="space-y-2">`;
+            
+            qData.options.forEach((opt, idx) => {
+                html += `
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-blue-50/50 cursor-pointer transition">
+                        <input type="radio" name="option" value="${idx}" class="w-4 h-4 text-blue-600">
+                        <span class="text-sm text-slate-700">${opt}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            document.getElementById('questionContainer').innerHTML = html;
+        }
+
+        function nextQuestion() {
+            const selectedOpt = document.querySelector('input[name="option"]:checked');
+            if (!selectedOpt) {
+                alert("অনুগ্রহ করে একটি উত্তর সিলেক্ট করুন!");
+                return;
+            }
+
+            if (parseInt(selectedOpt.value) === sampleQuestions[currentQIndex].ans) {
+                score++;
+            }
+
+            currentQIndex++;
+            if (currentQIndex < sampleQuestions.length) {
+                renderQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('mcqScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('scoreText').innerText = `${score}/${sampleQuestions.length}`;
+        }
+
+        function backToDashboard() {
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('examDashboard').classList.remove('hidden');
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
