@@ -6,8 +6,6 @@
     <title>ExamPrep SSC-27 - শিক্ষার্থী পোর্টাল</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
     <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -15,106 +13,66 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <!-- Header -->
     <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-white text-blue-600 font-bold rounded-lg flex items-center justify-center text-lg">E</div>
-                <h1 class="text-xl font-bold tracking-wide">ExamPrep SSC-27</h1>
-            </div>
+            <h1 class="text-xl font-bold">ExamPrep SSC-27</h1>
             <span id="userStatus" class="text-xs bg-blue-700 px-2.5 py-1 rounded-full text-blue-100">গেস্ট</span>
         </div>
     </header>
 
     <main class="max-w-md mx-auto w-full px-4 py-6 flex-grow">
 
-        <!-- Auth Tabs -->
         <div id="authTabs" class="flex bg-slate-200 p-1 rounded-xl mb-6">
             <button onclick="switchTab('pay')" id="tabPay" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600">নতুন পেমেন্ট</button>
             <button onclick="switchTab('login')" id="tabLogin" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600">লগইন (পরীক্ষা দিন)</button>
         </div>
 
-        <!-- Section 1: Payment Form -->
+        <!-- Payment -->
         <div id="paymentSection" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-slate-900">এসএসসি ২০২৭ মডেল টেস্ট</h2>
-                <p class="text-slate-500 text-sm mt-1">মাত্র ৫০ টাকায় অংশ নিন এবং নিজেকে যাচাই করুন</p>
-            </div>
-
-            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-                <h3 class="font-semibold text-blue-900 text-sm mb-1">পেমেন্ট করার নিয়ম:</h3>
-                <p class="text-xs text-blue-800">১. বিকাশ/নগদ নম্বর: <span class="font-bold">01722166666</span> (Personal)</p>
-                <p class="text-xs text-blue-800 mt-1">২. ৫০ টাকা Send Money করে নিচে আপনার তথ্য ও TrxID দিন।</p>
-            </div>
-
-            <form id="payForm" onsubmit="submitPayment(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">আপনার নাম</label>
-                    <input type="text" id="userName" required placeholder="উদাহরণ: মায়েন উদ্দিন" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল নম্বর (লগইন আইডি)</label>
-                    <input type="tel" id="userPhone" required placeholder="017XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">বিকাশ/নগদ TrxID</label>
-                    <input type="text" id="trxId" required placeholder="যেমন: 8N7A6D5E" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                </div>
-                <button type="submit" id="btnSubmitPay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg transition text-sm">
-                    পেমেন্ট সাবমিট করুন
-                </button>
+            <h2 class="text-xl font-bold mb-4">মডেল টেস্ট ২০২৭ প্যাকেজ</h2>
+            <p class="text-xs text-slate-600 mb-4">বিকাশ/নগদ: <span class="font-bold">01722166666</span> (Send Money)</p>
+            <form onsubmit="submitPayment(event)" class="space-y-3">
+                <input type="text" id="userName" required placeholder="আপনার নাম" class="w-full p-2.5 border rounded-xl text-sm">
+                <input type="tel" id="userPhone" required placeholder="মোবাইল নম্বর" class="w-full p-2.5 border rounded-xl text-sm">
+                <input type="text" id="trxId" required placeholder="TrxID" class="w-full p-2.5 border rounded-xl text-sm">
+                <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm">সাবমিট করুন</button>
             </form>
         </div>
 
-        <!-- Section 2: Login Form -->
+        <!-- Login -->
         <div id="loginSection" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <h2 class="text-xl font-bold text-slate-900 mb-2">শিক্ষার্থী লগইন</h2>
-            <p class="text-xs text-slate-500 mb-4">পেমেন্ট এপ্রুভ হয়ে থাকলে মোবাইল নম্বর দিয়ে প্রবেশ করুন</p>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল নম্বর</label>
-                    <input type="tel" id="loginPhone" required placeholder="017XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition text-sm">
-                    লগইন করুন
-                </button>
+            <h2 class="text-xl font-bold mb-4">শিক্ষার্থী লগইন</h2>
+            <form onsubmit="handleLogin(event)" class="space-y-3">
+                <input type="tel" id="loginPhone" required placeholder="মোবাইল নম্বর" class="w-full p-2.5 border rounded-xl text-sm">
+                <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm">লগইন করুন</button>
             </form>
         </div>
 
-        <!-- Section 3: Pending Notice -->
-        <div id="pendingNotice" class="hidden bg-amber-50 border border-amber-200 p-6 rounded-2xl text-center">
-            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">⏳</div>
-            <h3 class="font-bold text-amber-900 text-lg">পেমেন্ট অপেক্ষমাণ (Pending)</h3>
-            <p class="text-xs text-amber-700 mt-2">আপনার পেমেন্ট ভেরিফাই করা হচ্ছে। এডমিন এটি এপ্রুভ করলে আপনি পরীক্ষা দিতে পারবেন।</p>
-            <button onclick="location.reload()" class="mt-4 bg-amber-600 text-white text-xs px-4 py-2 rounded-lg font-bold">রিফ্রেশ করুন</button>
-        </div>
-
-        <!-- Section 4: Exam Dashboard -->
-        <div id="examDashboard" class="hidden space-y-5">
+        <!-- Dashboard with Multi-Select Checkboxes -->
+        <div id="examDashboard" class="hidden space-y-4">
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                <h2 id="welcomeText" class="font-bold text-slate-900">স্বাগতম!</h2>
-                <p class="text-xs text-slate-500 mt-0.5">ড্রপডাউন থেকে আপনার বিষয়টি নির্বাচন করে পরীক্ষা শুরু করুন</p>
+                <h2 id="welcomeText" class="font-bold text-slate-900 text-lg">মডেল টেস্ট - ২০২৭</h2>
+                <p class="text-xs text-emerald-600 font-bold mt-1">অংশগ্রহণের জন্য বিষয়গুলো বেছে নিন:</p>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5">পরীক্ষার বিষয় নির্বাচন করুন:</label>
-                    <select id="studentSubjectSelect" class="w-full p-3 border rounded-xl text-sm bg-slate-50 font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500">
-                        <option value="">-- বিষয় চয়েজ করুন --</option>
-                    </select>
+            <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                <p class="text-xs font-bold text-emerald-900 border-b border-emerald-100 pb-2">যেকোনো ৩টি বিষয় বেছে নিন:</p>
+                <div id="subjectCheckboxContainer" class="space-y-2.5">
+                    <p class="text-xs text-slate-400">বিষয় লোড হচ্ছে...</p>
                 </div>
-                <button onclick="startSelectedExam()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm">
-                    পরীক্ষা শুরু করুন
-                </button>
             </div>
+
+            <button onclick="startMultiExam()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition text-sm shadow-md">
+                পরীক্ষা শুরু করুন
+            </button>
         </div>
 
-        <!-- Section 5: Live MCQ Exam Screen -->
+        <!-- Live MCQ Exam -->
         <div id="mcqScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div class="flex justify-between items-center pb-4 mb-4 border-b border-slate-100">
                 <div>
                     <span id="questionCount" class="text-xs font-bold text-blue-600 block">প্রশ্ন ১/১</span>
-                    <span id="activeSubjectTitle" class="text-xs text-slate-500 font-medium">বিষয়</span>
+                    <span id="activeSubjectTitle" class="text-xs text-slate-500 font-medium">পরীক্ষা</span>
                 </div>
                 <span id="timerText" class="text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100">⏱️ 00:00</span>
             </div>
@@ -124,15 +82,15 @@
             </button>
         </div>
 
-        <!-- Section 6: Result Screen -->
+        <!-- Result -->
         <div id="resultScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center">
             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">🏆</div>
             <h2 class="text-2xl font-bold text-slate-900">পরীক্ষা সম্পন্ন!</h2>
             <div class="bg-slate-50 p-4 rounded-xl my-6">
-                <span class="text-xs text-slate-500 block mb-1">প্রাপ্ত নম্বর / মোট নম্বর</span>
+                <span class="text-xs text-slate-500 block mb-1">প্রাপ্ত নম্বর</span>
                 <span id="scoreText" class="text-3xl font-extrabold text-blue-600">০/০</span>
             </div>
-            <button onclick="backToDashboard()" class="w-full bg-slate-900 text-white font-semibold py-3 rounded-xl transition text-sm">বিষয় তালিকায় ফিরুন</button>
+            <button onclick="location.reload()" class="w-full bg-slate-900 text-white font-semibold py-3 rounded-xl text-sm">ড্যাশবোর্ডে ফিরুন</button>
         </div>
 
     </main>
@@ -155,113 +113,103 @@
             if(type === 'pay') {
                 document.getElementById('paymentSection').classList.remove('hidden');
                 document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('tabPay').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600";
-                document.getElementById('tabLogin').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
             } else {
                 document.getElementById('paymentSection').classList.add('hidden');
                 document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('tabLogin').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600";
-                document.getElementById('tabPay').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
             }
         }
 
         async function submitPayment(e) {
             e.preventDefault();
-            const name = document.getElementById('userName').value.trim();
             const phone = document.getElementById('userPhone').value.trim();
-            const trxId = document.getElementById('trxId').value.trim();
-            const btn = document.getElementById('btnSubmitPay');
-
-            btn.disabled = true;
-            btn.innerText = "সাবমিট হচ্ছে...";
-
-            try {
-                await db.collection('students').doc(phone).set({
-                    name: name,
-                    phone: phone,
-                    trxId: trxId,
-                    status: 'pending',
-                    createdAt: new Date()
-                });
-                alert("পেমেন্ট সফলভাবে জমা হয়েছে! এডমিন এটি এপ্রুভ করলে আপনি লগইন করতে পারবেন।");
-                switchTab('login');
-                document.getElementById('loginPhone').value = phone;
-            } catch (err) {
-                alert("ত্রুটি ঘটেছে: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "পেমেন্ট সাবমিট করুন";
-            }
+            await db.collection('students').doc(phone).set({
+                name: document.getElementById('userName').value.trim(),
+                phone: phone,
+                trxId: document.getElementById('trxId').value.trim(),
+                status: 'pending'
+            });
+            alert("পেমেন্ট জমা হয়েছে!");
+            switchTab('login');
         }
 
         async function handleLogin(e) {
             e.preventDefault();
             const phone = document.getElementById('loginPhone').value.trim();
+            const docRef = await db.collection('students').doc(phone).get();
+            
+            if(!docRef.exists) return alert("আবেদন পাওয়া যায়নি!");
+            const data = docRef.data();
 
-            try {
-                const docRef = await db.collection('students').doc(phone).get();
-                if(!docRef.exists) {
-                    alert("এই নম্বর দিয়ে কোনো আবেদন পাওয়া যায়নি! আগে পেমেন্ট সাবমিট করুন।");
-                    return;
-                }
-
-                const data = docRef.data();
-                if(data.status === 'pending') {
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('authTabs').classList.add('hidden');
-                    document.getElementById('pendingNotice').classList.remove('hidden');
-                } else if(data.status === 'approved') {
-                    document.getElementById('userStatus').innerText = "এক্টিভ";
-                    document.getElementById('welcomeText').innerText = `স্বাগতম, ${data.name}!`;
-                    document.getElementById('authTabs').classList.add('hidden');
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('examDashboard').classList.remove('hidden');
-                    loadSubjectsDropdown();
-                } else {
-                    alert("আপনার পেমেন্ট বাতিল করা হয়েছে।");
-                }
-            } catch (err) {
-                alert("লগইন ব্যর্থ: " + err.message);
+            if(data.status === 'approved') {
+                document.getElementById('authTabs').classList.add('hidden');
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('examDashboard').classList.remove('hidden');
+                loadSubjectCheckboxes();
+            } else {
+                alert("আপনার পেমেন্ট অপেক্ষমাণ (Pending) বা বাতিল করা হয়েছে।");
             }
         }
 
-        let currentQuestions = [];
-        let currentQIndex = 0, obtainedScore = 0, marksPerQ = 1;
-        let timerInterval, totalSeconds = 0;
+        let allExamsData = {};
 
-        function loadSubjectsDropdown() {
-            const select = document.getElementById('studentSubjectSelect');
+        function loadSubjectCheckboxes() {
+            const container = document.getElementById('subjectCheckboxContainer');
             db.collection('exams').get().then(snapshot => {
-                select.innerHTML = `<option value="">-- বিষয় চয়েজ করুন --</option>`;
+                let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const qCount = data.questions ? data.questions.length : 0;
-                    if(qCount > 0) {
-                        select.innerHTML += `<option value="${doc.id}">${data.title} (${qCount}টি প্রশ্ন - ${data.timeLimit} মিনিট)</option>`;
-                    }
+                    allExamsData[doc.id] = data;
+                    html += `
+                        <label class="flex items-center justify-between p-3.5 bg-white border border-emerald-100 rounded-xl cursor-pointer hover:border-emerald-300 transition shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" value="${doc.id}" class="subject-checkbox w-4 h-4 text-emerald-600 rounded">
+                                <span class="font-bold text-xs text-slate-800">${data.title}</span>
+                            </div>
+                            <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">${data.timeLimit || 25} মিনিট</span>
+                        </label>
+                    `;
                 });
+                container.innerHTML = html || "<p class='text-xs text-slate-400'>কোনো বিষয় নেই।</p>";
             });
         }
 
-        async function startSelectedExam() {
-            const subjectId = document.getElementById('studentSubjectSelect').value;
-            if(!subjectId) return alert("অনুগ্রহ করে একটি বিষয় নির্বাচন করুন!");
+        // Shuffle questions so every student gets different order
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
 
-            const doc = await db.collection('exams').doc(subjectId).get();
-            if(!doc.exists) return;
+        let currentQuestions = [];
+        let currentQIndex = 0, obtainedScore = 0;
+        let timerInterval, totalSeconds = 0;
 
-            const data = doc.data();
-            currentQuestions = data.questions || [];
-            marksPerQ = data.marksPerQ || 1;
-            currentQIndex = 0; 
-            obtainedScore = 0;
+        function startMultiExam() {
+            const checkboxes = document.querySelectorAll('.subject-checkbox:checked');
+            if(checkboxes.length === 0) return alert("কমপক্ষে একটি বিষয় বেছে নিন!");
 
-            document.getElementById('activeSubjectTitle').innerText = data.title;
+            currentQuestions = [];
+            totalSeconds = 0;
+
+            checkboxes.forEach(cb => {
+                const exam = allExamsData[cb.value];
+                if(exam && exam.questions) {
+                    currentQuestions.push(...exam.questions);
+                    totalSeconds += (exam.timeLimit || 25) * 60;
+                }
+            });
+
+            if(currentQuestions.length === 0) return alert("সিলেক্ট করা বিষয়ে প্রশ্ন নেই!");
+
+            // Shuffle questions for each student dynamically
+            currentQuestions = shuffleArray(currentQuestions);
+
+            currentQIndex = 0; obtainedScore = 0;
             document.getElementById('examDashboard').classList.add('hidden');
             document.getElementById('mcqScreen').classList.remove('hidden');
-            
-            // Timer setup
-            totalSeconds = (data.timeLimit || 25) * 60;
+
             startTimer();
             renderQuestion();
         }
@@ -275,7 +223,7 @@
                 document.getElementById('timerText').innerText = `⏱️ ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                 if(totalSeconds <= 0) {
                     clearInterval(timerInterval);
-                    alert("সময় শেষ হয়ে গেছে!");
+                    alert("সময় শেষ!");
                     showResult();
                 }
             }, 1000);
@@ -285,12 +233,10 @@
             const q = currentQuestions[currentQIndex];
             document.getElementById('questionCount').innerText = `প্রশ্ন ${currentQIndex + 1}/${currentQuestions.length}`;
             
-            let imgHtml = (q.imgUrl && q.imgUrl.startsWith('http')) ? `<img src="${q.imgUrl}" class="w-full max-h-48 object-contain rounded-xl mb-3 border">` : '';
-            
-            let html = `${imgHtml}<h3 class="font-bold text-slate-800 mb-3 text-sm">${q.q}</h3><div class="space-y-2">`;
+            let html = `<h3 class="font-bold text-slate-800 mb-3 text-xs leading-relaxed">${q.q}</h3><div class="space-y-2">`;
             q.options.forEach((opt, idx) => {
                 html += `<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
-                    <input type="radio" name="option" value="${idx}"> <span class="text-sm text-slate-700">${opt}</span>
+                    <input type="radio" name="option" value="${idx}"> <span class="text-xs text-slate-700">${opt}</span>
                 </label>`;
             });
             document.getElementById('questionContainer').innerHTML = html + `</div>`;
@@ -299,7 +245,7 @@
         function nextQuestion() {
             const selected = document.querySelector('input[name="option"]:checked');
             if (!selected) return alert("উত্তর বেছে নিন!");
-            if (parseInt(selected.value) === currentQuestions[currentQIndex].ans) obtainedScore += marksPerQ;
+            if (parseInt(selected.value) === currentQuestions[currentQIndex].ans) obtainedScore++;
             currentQIndex++;
             if (currentQIndex < currentQuestions.length) renderQuestion();
             else showResult();
@@ -309,17 +255,8 @@
             clearInterval(timerInterval);
             document.getElementById('mcqScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
-            const totalMarks = currentQuestions.length * marksPerQ;
-            document.getElementById('scoreText').innerText = `${obtainedScore}/${totalMarks}`;
+            document.getElementById('scoreText').innerText = `${obtainedScore}/${currentQuestions.length}`;
         }
-
-        function backToDashboard() {
-            document.getElementById('resultScreen').classList.add('hidden');
-            document.getElementById('examDashboard').classList.remove('hidden');
-            loadSubjectsDropdown();
-        }
-
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
     </script>
 </body>
 </html>
