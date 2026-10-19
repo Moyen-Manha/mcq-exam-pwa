@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamPrep - এডমিন প্যানেল</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4">
+
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl p-6 shadow-md">
+        <h1 class="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">পেমেন্ট ম্যানেজমেন্ট (Admin)</h1>
+
+        <!-- PIN Protection -->
+        <div id="pinBox" class="space-y-3">
+            <p class="text-sm text-slate-600">এডমিন পেজে ঢুকতে গোপন পিন লিখুন:</p>
+            <input type="password" id="adminPin" placeholder="পিন লিখুন (Default: 1234)" class="w-full p-2.5 border rounded-xl text-sm">
+            <button onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl">প্রবেশ করুন</button>
+        </div>
+
+        <!-- Student Requests List -->
+        <div id="adminContent" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-bold text-slate-700">আবেদনকারীদের তালিকা</h2>
+                <button onclick="loadStudents()" class="text-xs bg-slate-200 px-3 py-1.5 rounded-lg">রিফ্রেশ</button>
+            </div>
+
+            <div id="studentList" class="space-y-3">
+                <p class="text-xs text-slate-400">লোডিং...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function loginAdmin() {
+            const pin = document.getElementById('adminPin').value;
+            if(pin === '1234') { // আপনি পছন্দমতো পিন পরিবর্তন করতে পারেন
+                document.getElementById('pinBox').classList.add('hidden');
+                document.getElementById('adminContent').classList.remove('hidden');
+                loadStudents();
+            } else {
+                alert("ভুল পিন নম্বর!");
+            }
+        }
+
+        function loadStudents() {
+            const list = document.getElementById('studentList');
+            list.innerHTML = "<p class='text-xs text-slate-400'>ডাটা লোড হচ্ছে...</p>";
+
+            db.collection('students').orderBy('createdAt', 'desc').get().then(snapshot => {
+                if(snapshot.empty) {
+                    list.innerHTML = "<p class='text-xs text-slate-500'>কোনো আবেদন নেই।</p>";
+                    return;
+                }
+
+                let html = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    let statusBadge = data.status === 'approved' 
+                        ? '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Approved</span>' 
+                        : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded">Pending</span>';
+
+                    html += `
+                        <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50">
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-800">${data.name} ${statusBadge}</h3>
+                                <p class="text-xs text-slate-600">ফোন: <span class="font-semibold">${data.phone}</span></p>
+                                <p class="text-xs text-blue-600 font-mono">TrxID: ${data.trxId}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                ${data.status === 'pending' ? `
+                                    <button onclick="updateStatus('${data.phone}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
+                                    <button onclick="updateStatus('${data.phone}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
+                                ` : `
+                                    <button onclick="updateStatus('${data.phone}', 'pending')" class="bg-slate-300 text-slate-700 text-xs px-2 py-1 rounded">Reset</button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            });
+        }
+
+        function updateStatus(phone, status) {
+            db.collection('students').doc(phone).update({ status: status }).then(() => {
+                loadStudents();
+            });
+        }
+    </script>
+</body>
+</html>
