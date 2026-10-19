@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExamPrep SSC-27 - এডমিন প্যানেল</title>
+    <title>ExamPrep SSC-27 - AI এডমিন প্যানেল</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
@@ -14,65 +14,82 @@
 <body class="bg-slate-100 min-h-screen p-4">
 
     <div class="max-w-3xl mx-auto bg-white rounded-2xl p-6 shadow-md space-y-8">
-        
         <div class="flex justify-between items-center border-b pb-4">
-            <h1 class="text-2xl font-bold text-slate-800">ExamPrep এডমিন কন্ট্রোল প্যানেল (SSC 2027)</h1>
+            <h1 class="text-2xl font-bold text-slate-800">ExamPrep AI এডমিন প্যানেল (SSC 2027)</h1>
         </div>
 
-        <!-- PIN Protection -->
         <div id="pinBox" class="space-y-3">
             <p class="text-sm text-slate-600">এডমিন পেজে ঢুকতে গোপন পিন লিখুন:</p>
             <input type="password" id="adminPin" placeholder="পিন লিখুন (Default: 1234)" class="w-full p-2.5 border rounded-xl text-sm">
             <button onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl font-bold">প্রবেশ করুন</button>
         </div>
 
-        <!-- Dashboard -->
         <div id="adminContent" class="hidden space-y-8">
-
             <div class="flex bg-slate-100 p-1 rounded-xl">
                 <button onclick="switchAdminTab('students')" id="tabStudentsBtn" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow">পেমেন্ট রিকোয়েস্ট</button>
-                <button onclick="switchAdminTab('questions')" id="tabQuestionsBtn" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600">গুগল শীট সিঙ্ক</button>
+                <button onclick="switchAdminTab('aiGenerator')" id="tabAiBtn" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600">✨ AI প্রশ্ন জেনারেটর</button>
             </div>
 
-            <!-- Tab 1: Student Requests -->
             <div id="tabStudentsSection" class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h2 class="font-bold text-slate-700">আবেদনকারীদের তালিকা</h2>
                     <button onclick="loadStudents()" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg font-bold">রিফ্রেশ করুন</button>
                 </div>
-                <div id="studentList" class="space-y-3">
-                    <p class="text-xs text-slate-400">লোডিং...</p>
-                </div>
+                <div id="studentList" class="space-y-3"><p class="text-xs text-slate-400">লোডিং...</p></div>
             </div>
 
-            <!-- Tab 2: Sync Questions from 2 Sheets -->
-            <div id="tabQuestionsSection" class="hidden space-y-6">
-                <h2 class="font-bold text-slate-700 text-lg border-b pb-2">গুগল শীট (Sets & Questions CSV) থেকে সিঙ্ক করুন</h2>
+            <div id="tabAiSection" class="hidden space-y-6">
+                <h2 class="font-bold text-slate-700 text-lg border-b pb-2">বোর্ড স্ট্যান্ডার্ড AI প্রশ্ন জেনারেটর</h2>
                 
-                <form onsubmit="syncGoogleSheet(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
+                <form onsubmit="generateAiQuestions(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">১ম শীট CSV URL (Sets Info - বিষয়, সময়, মার্ক্স)</label>
-                        <input type="url" id="setsUrl" required placeholder="১ম ট্যাবের CSV লিংক দিন" class="w-full p-2.5 border rounded-xl text-sm">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">পরীক্ষার বিষয় ও অধ্যায়</label>
+                        <input type="text" id="subjectTitle" required placeholder="যেমন: রসায়ন (৩য় অধ্যায়)" class="w-full p-2.5 border rounded-xl text-sm bg-white">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">২য় শীট CSV URL (Questions Info - প্রশ্ন ও অপশনসমূহ)</label>
-                        <input type="url" id="questionsUrl" required placeholder="২য় ট্যাবের CSV লিংক দিন" class="w-full p-2.5 border rounded-xl text-sm">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">অধ্যায়/বইয়ের মূল বিবরণ বা নির্দেশিকা</label>
+                        <textarea id="bookContext" rows="3" required placeholder="টপিক বা বইয়ের অংশ লিখুন..." class="w-full p-2.5 border rounded-xl text-sm bg-white"></textarea>
                     </div>
 
-                    <button type="submit" id="btnSync" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-blue-700 transition">
-                        সব বিষয় ও প্রশ্ন ডাটাবেজে সিঙ্ক করুন
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">প্রশ্ন সংখ্যা</label>
+                            <input type="number" id="qCount" value="15" min="1" max="30" class="w-full p-2 border rounded-xl text-sm bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">সময় (মিনিট)</label>
+                            <input type="number" id="timeLimit" value="25" min="1" class="w-full p-2 border rounded-xl text-sm bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">মার্কস/প্রশ্ন</label>
+                            <input type="number" id="marksPerQ" value="1" step="0.5" class="w-full p-2 border rounded-xl text-sm bg-white">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnGenerate" class="w-full bg-purple-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-purple-700 transition">
+                        ✨ বোর্ড মানের প্রশ্ন তৈরি করুন
                     </button>
                 </form>
 
-                <div class="mt-6">
-                    <h3 class="font-bold text-slate-700 text-sm mb-3">ডাটাবেজে থাকা পরীক্ষার বিষয়সমূহ</h3>
-                    <div id="examList" class="space-y-3">
-                        <p class="text-xs text-slate-400">লোডিং...</p>
+                <div id="reviewContainer" class="hidden space-y-4 bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <div class="flex justify-between items-center border-b border-amber-200 pb-2">
+                        <h3 class="font-bold text-amber-900 text-sm">AI জেনারেটেড প্রশ্ন (রিভিউ ও এডিট করুন)</h3>
+                        <span id="genCountBadge" class="bg-amber-200 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold"></span>
                     </div>
+
+                    <div id="aiQuestionsList" class="space-y-4"></div>
+
+                    <button onclick="saveApprovedQuestions()" id="btnSaveFinal" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-green-700 transition">
+                        সব চেক করেছি - ফায়ারবেসে সেভ করুন
+                    </button>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-bold text-slate-700 text-sm mb-3">ডাটাবেজে সেভ থাকা বিষয়সমূহ</h3>
+                    <div id="examList" class="space-y-3"><p class="text-xs text-slate-400">লোডিং...</p></div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -90,6 +107,8 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        let generatedQuestionsData = [];
+
         function loginAdmin() {
             const pin = document.getElementById('adminPin').value;
             if(pin === '1234') {
@@ -97,194 +116,159 @@
                 document.getElementById('adminContent').classList.remove('hidden');
                 loadStudents();
                 loadExams();
-            } else {
-                alert("ভুল পিন নম্বর!");
-            }
+            } else { alert("ভুল পিন!"); }
         }
 
         function switchAdminTab(type) {
             if(type === 'students') {
                 document.getElementById('tabStudentsSection').classList.remove('hidden');
-                document.getElementById('tabQuestionsSection').classList.add('hidden');
-                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
-                document.getElementById('tabQuestionsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+                document.getElementById('tabAiSection').classList.add('hidden');
             } else {
                 document.getElementById('tabStudentsSection').classList.add('hidden');
-                document.getElementById('tabQuestionsSection').classList.remove('hidden');
-                document.getElementById('tabQuestionsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
-                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+                document.getElementById('tabAiSection').classList.remove('hidden');
             }
         }
 
         function loadStudents() {
             const list = document.getElementById('studentList');
-            list.innerHTML = "<p class='text-xs text-slate-400'>ডাটা লোড হচ্ছে...</p>";
-
             db.collection('students').get().then(snapshot => {
-                if(snapshot.empty) {
-                    list.innerHTML = "<p class='text-xs text-slate-500'>কোনো আবেদন পাওয়া যায়নি।</p>";
-                    return;
-                }
-
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const docId = doc.id;
                     const status = data.status || 'pending';
-                    let statusBadge = status === 'approved' 
-                        ? '<span class="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-bold">Approved</span>' 
-                        : (status === 'rejected' ? '<span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-bold">Rejected</span>' : '<span class="bg-amber-100 text-amber-700 text-xs px-2.5 py-1 rounded-full font-bold">Pending</span>');
-
                     html += `
                         <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50 shadow-sm">
                             <div>
-                                <h3 class="font-bold text-sm text-slate-800">${data.name || 'নাম নেই'} &nbsp; ${statusBadge}</h3>
-                                <p class="text-xs text-slate-600 mt-1">ফোন: <span class="font-semibold">${data.phone || docId}</span></p>
-                                <p class="text-xs text-blue-600 font-mono mt-0.5">TrxID: ${data.trxId || 'নেই'}</p>
+                                <h3 class="font-bold text-sm text-slate-800">${data.name || 'নাম নেই'} (${status})</h3>
+                                <p class="text-xs text-slate-600">ফোন: ${data.phone || doc.id}</p>
+                                <p class="text-xs text-blue-600 font-mono">TrxID: ${data.trxId || 'নেই'}</p>
                             </div>
                             <div class="flex gap-2">
-                                ${status === 'pending' ? `
-                                    <button onclick="updateStatus('${docId}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-2 rounded-lg font-bold hover:bg-green-700">Approve</button>
-                                    <button onclick="updateStatus('${docId}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-2 rounded-lg font-bold hover:bg-red-700">Reject</button>
-                                ` : `
-                                    <button onclick="updateStatus('${docId}', 'pending')" class="bg-slate-300 text-slate-700 text-xs px-3 py-2 rounded-lg font-semibold">Reset</button>
-                                `}
+                                <button onclick="updateStatus('${doc.id}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
+                                <button onclick="updateStatus('${doc.id}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
                             </div>
                         </div>
                     `;
                 });
-                list.innerHTML = html;
+                list.innerHTML = html || "<p class='text-xs text-slate-500'>কোনো আবেদন নেই।</p>";
             });
         }
 
         function updateStatus(docId, status) {
-            db.collection('students').doc(docId).update({ status: status }).then(() => {
-                alert("স্ট্যাটাস সফলভাবে আপডেট করা হয়েছে!");
-                loadStudents();
-            });
+            db.collection('students').doc(docId).update({ status: status }).then(() => loadStudents());
         }
 
-        // Fetch CSV using AllOrigins CORS proxy
-        async function fetchCSV(rawUrl) {
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rawUrl)}`;
-            const res = await fetch(proxyUrl);
-            if (!res.ok) throw new Error("CORS Proxy দিয়ে ডাটা আনতে সমস্যা হয়েছে।");
-            const data = await res.json();
-            return data.contents;
-        }
-
-        function parseCSVRows(text) {
-            const lines = text.split(/\r?\n/);
-            return lines.map(line => {
-                if(!line.trim()) return null;
-                const matches = line.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
-                return matches.map(v => v.replace(/^"|"$/g, '').trim());
-            }).filter(Boolean);
-        }
-
-        async function syncGoogleSheet(e) {
+        async function generateAiQuestions(e) {
             e.preventDefault();
-            const setsUrl = document.getElementById('setsUrl').value.trim();
-            const questionsUrl = document.getElementById('questionsUrl').value.trim();
-            const btn = document.getElementById('btnSync');
+            const subject = document.getElementById('subjectTitle').value.trim();
+            const context = document.getElementById('bookContext').value.trim();
+            const qCount = parseInt(document.getElementById('qCount').value);
+            const btn = document.getElementById('btnGenerate');
 
             btn.disabled = true;
-            btn.innerText = "সিঙ্ক হচ্ছে...";
+            btn.innerText = "⏳ প্রশ্ন তৈরি হচ্ছে...";
+
+            // Board-standard prompt including knowledge, application, and multi-statement MCQs
+            const prompt = `You are an expert SSC 2027 Question Setter following Bangladesh NCTB Curriculum.
+Generate ${qCount} MCQs in Bengali based on: "${context}".
+Must include:
+1. Knowledge, Understanding, and Application level questions.
+2. Poly-statement questions (বহুপদী সমাপ্তিসূচক প্রশ্ন) with format like: "i. ... ii. ... iii. ..." and options like "K. i ও ii", "Kh. ii ও iii", etc.
+
+Output MUST strictly be JSON array:
+[
+  {
+    "q": "প্রশ্নটি এখানে লিখুন",
+    "options": ["অপশন ক", "অপশন খ", "অপশন গ", "অপশন ঘ"],
+    "ans": 0
+  }
+]`;
 
             try {
-                const [setsCsv, questionsCsv] = await Promise.all([
-                    fetchCSV(setsUrl),
-                    fetchCSV(questionsUrl)
-                ]);
+                const apiKey = firebaseConfig.apiKey;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-                const setsRows = parseCSVRows(setsCsv);
-                const questionsRows = parseCSVRows(questionsCsv);
-
-                // Parse Sets (Sheet 1)
-                const setsMap = {};
-                for(let i = 1; i < setsRows.length; i++) {
-                    const row = setsRows[i];
-                    if(row && row.length >= 2) {
-                        const setNo = row[0];
-                        setsMap[setNo] = {
-                            setNo: setNo,
-                            title: row[1],
-                            timeLimit: parseInt(row[2]) || 25,
-                            marksPerQ: parseFloat(row[3]) || 1,
-                            questions: []
-                        };
-                    }
-                }
-
-                // Parse Questions (Sheet 2) and map to Sets
-                for(let i = 1; i < questionsRows.length; i++) {
-                    const row = questionsRows[i];
-                    if(row && row.length >= 8) {
-                        const setN = row[0];
-                        if(setsMap[setN]) {
-                            setsMap[setN].questions.push({
-                                q: row[1],
-                                imgUrl: row[2] || '',
-                                options: [row[3], row[4], row[5], row[6]],
-                                ans: (parseInt(row[7]) || 1) - 1 // 1-4 to 0-3
-                            });
-                        }
-                    }
-                }
-
-                if(Object.keys(setsMap).length === 0) {
-                    alert("শীট থেকে কোনো তথ্য পাওয়া যায়নি! গুগল শীটের ফরম্যাট ঠিক আছে কিনা নিশ্চিত করুন।");
-                    return;
-                }
-
-                // Batch upload to Firestore
-                const batch = db.batch();
-                Object.keys(setsMap).forEach(key => {
-                    const setObj = setsMap[key];
-                    const docRef = db.collection('exams').doc(`set_${setObj.setNo}`);
-                    batch.set(docRef, setObj);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
-                await batch.commit();
-                alert("সাফল্যের সাথে সব বিষয়, সময় ও প্রশ্ন ফায়ারবেসে সিঙ্ক হয়েছে!");
-                loadExams();
+                const resData = await response.json();
+                let replyText = resData.candidates[0].content.parts[0].text;
+                replyText = replyText.replace(/```json|```/g, '').trim();
+                generatedQuestionsData = JSON.parse(replyText);
+
+                renderQuestionsForReview();
             } catch (err) {
                 alert("ত্রুটি: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "সব বিষয় ও প্রশ্ন ডাটাবেজে সিঙ্ক করুন";
+                btn.innerText = "✨ বোর্ড মানের প্রশ্ন তৈরি করুন";
             }
+        }
+
+        function renderQuestionsForReview() {
+            const container = document.getElementById('aiQuestionsList');
+            document.getElementById('reviewContainer').classList.remove('hidden');
+            document.getElementById('genCountBadge').innerText = `${generatedQuestionsData.length}টি প্রশ্ন`;
+
+            let html = "";
+            generatedQuestionsData.forEach((qObj, index) => {
+                html += `
+                    <div class="bg-white p-3 rounded-xl border border-amber-200 text-xs space-y-2">
+                        <textarea onchange="generatedQuestionsData[${index}].q = this.value" class="w-full p-2 border rounded-lg font-semibold text-slate-800" rows="2">${qObj.q}</textarea>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${qObj.options.map((opt, oIdx) => `
+                                <div>
+                                    <input type="text" value="${opt}" onchange="generatedQuestionsData[${index}].options[${oIdx}] = this.value" class="w-full p-1.5 border rounded-lg ${qObj.ans === oIdx ? 'bg-green-50 font-bold border-green-500' : ''}">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function saveApprovedQuestions() {
+            const subjectTitle = document.getElementById('subjectTitle').value.trim();
+            const timeLimit = parseInt(document.getElementById('timeLimit').value) || 25;
+            const marksPerQ = parseFloat(document.getElementById('marksPerQ').value) || 1;
+
+            const docId = subjectTitle.replace(/\s+/g, '_');
+            await db.collection('exams').doc(docId).set({
+                setNo: Date.now().toString().slice(-4),
+                title: subjectTitle,
+                timeLimit: timeLimit,
+                marksPerQ: marksPerQ,
+                questions: generatedQuestionsData,
+                updatedAt: new Date()
+            });
+
+            alert(`"${subjectTitle}" সেভ করা হয়েছে!`);
+            document.getElementById('reviewContainer').classList.add('hidden');
+            loadExams();
         }
 
         function loadExams() {
             const list = document.getElementById('examList');
             db.collection('exams').get().then(snapshot => {
-                if(snapshot.empty) {
-                    list.innerHTML = "<p class='text-xs text-slate-400'>কোনো বিষয় সিঙ্ক করা হয়নি।</p>";
-                    return;
-                }
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const qCount = data.questions ? data.questions.length : 0;
                     html += `
                         <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
                             <div>
-                                <span class="font-bold text-slate-800 text-sm">${data.title} (Set: ${data.setNo})</span>
-                                <p class="text-slate-500 mt-0.5">সময়: ${data.timeLimit} মিনিট | প্রশ্ন: ${qCount} টি | নম্বর/প্রশ্ন: ${data.marksPerQ}</p>
+                                <span class="font-bold text-slate-800 text-sm">${data.title}</span>
+                                <p class="text-slate-500">সময়: ${data.timeLimit} মিনিট | প্রশ্ন: ${data.questions.length}টি</p>
                             </div>
-                            <button onclick="deleteExam('${doc.id}')" class="text-red-500 hover:underline font-bold">মুছে ফেলুন</button>
+                            <button onclick="db.collection('exams').doc('${doc.id}').delete().then(()=>loadExams())" class="text-red-500 hover:underline">মুছে ফেলুন</button>
                         </div>
                     `;
                 });
                 list.innerHTML = html;
             });
-        }
-
-        function deleteExam(id) {
-            if(confirm("আপনি কি এই বিষয় ও প্রশ্নগুলো মুছে ফেলতে চান?")) {
-                db.collection('exams').doc(id).delete().then(() => loadExams());
-            }
         }
     </script>
 </body>
