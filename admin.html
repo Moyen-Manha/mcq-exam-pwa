@@ -47,6 +47,12 @@
                 
                 <form onsubmit="generateAiQuestions(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
                     <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Gemini API Key (Google AI Studio থেকে প্রাপ্ত)</label>
+                        <input type="password" id="geminiApiKey" placeholder="আপনার Gemini API Key বসান (যেমন: AIzaSy...)" class="w-full p-2.5 border rounded-xl text-sm bg-white font-mono">
+                        <p class="text-[11px] text-slate-500 mt-1">* aistudio.google.com থেকে বিনামূল্যে আপনার API Key নিতে পারেন।</p>
+                    </div>
+
+                    <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">পরীক্ষার বিষয় ও অধ্যায়</label>
                         <input type="text" id="subjectTitle" required placeholder="যেমন: রসায়ন (৩য় অধ্যায়)" class="w-full p-2.5 border rounded-xl text-sm bg-white">
                     </div>
@@ -169,6 +175,12 @@
 
         async function generateAiQuestions(e) {
             e.preventDefault();
+            const apiKey = document.getElementById('geminiApiKey').value.trim();
+            if(!apiKey) {
+                alert("অনুগ্রহ করে আপনার Gemini API Key টি ইনপুট বক্সে বসান! (Google AI Studio থেকে ফ্রীতে নেয়া যায়)");
+                return;
+            }
+
             const subject = document.getElementById('subjectTitle').value.trim();
             const context = document.getElementById('bookContext').value.trim();
             const qCount = parseInt(document.getElementById('qCount').value);
@@ -177,13 +189,13 @@
             btn.disabled = true;
             btn.innerText = "⏳ AI প্রশ্ন তৈরি করছে...";
 
-            const prompt = `You are an expert SSC 2027 MCQ question maker following NCTB Bangladesh curriculum.
-Generate ${qCount} MCQs in Bengali based on this info/topic: "${context}".
-Include:
+            const prompt = `You are an expert SSC MCQ question maker following NCTB Bangladesh curriculum.
+Generate ${qCount} MCQs in Bengali based on this info: "${context}".
+Must include:
 - Knowledge and application level questions
 - Poly-statement questions (বহুপদী সমাপ্তিসূচক প্রশ্ন)
 
-Respond ONLY with a valid JSON array, no extra commentary or markdown syntax.
+Respond ONLY with a valid JSON array, no extra commentary or markdown formatting.
 Format:
 [
   {
@@ -194,7 +206,6 @@ Format:
 ]`;
 
             try {
-                const apiKey = firebaseConfig.apiKey;
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(url, {
@@ -205,15 +216,13 @@ Format:
 
                 const resData = await response.json();
 
-                // Safe parsing logic
                 if (!resData.candidates || !resData.candidates[0] || !resData.candidates[0].content) {
                     if (resData.error) throw new Error(resData.error.message);
-                    throw new Error("AI থেকে কোনো উত্তর পাওয়া যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।");
+                    throw new Error("AI থেকে কোনো উত্তর পাওয়া যায়নি। API Key সঠিকভাবে দেওয়া আছে কিনা যাচাই করুন।");
                 }
 
                 let replyText = resData.candidates[0].content.parts[0].text;
                 
-                // Extract only the JSON array [] part safely
                 const jsonMatch = replyText.match(/\[\s*\{[\s\S]*\}\s*\]/);
                 if (jsonMatch) {
                     replyText = jsonMatch[0];
@@ -284,7 +293,7 @@ Format:
 
             alert(`"${subjectTitle}" বিষয়ের পরীক্ষাটি সফলভাবে ফায়ারবেসে সেভ করা হয়েছে!`);
             document.getElementById('reviewContainer').classList.add('hidden');
-                loadExams();
+            loadExams();
         }
 
         function loadExams() {
