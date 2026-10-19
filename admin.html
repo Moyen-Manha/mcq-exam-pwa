@@ -176,16 +176,29 @@
 
         async function syncGoogleSheet(e) {
             e.preventDefault();
-            const setsUrl = document.getElementById('setsUrl').value.trim();
-            const questionsUrl = document.getElementById('questionsUrl').value.trim();
+            let setsUrl = document.getElementById('setsUrl').value.trim();
+            let questionsUrl = document.getElementById('questionsUrl').value.trim();
             const btn = document.getElementById('btnSync');
 
             btn.disabled = true;
             btn.innerText = "সিঙ্ক হচ্ছে...";
 
+            // CORS Proxy যুক্ত করা হচ্ছে যাতে "Failed to fetch" এরর না আসে
+            const proxy = "https://api.allorigins.win/raw?url=";
+            const finalSetsUrl = proxy + encodeURIComponent(setsUrl);
+            const finalQuestionsUrl = proxy + encodeURIComponent(questionsUrl);
+
             try {
-                // Fetch both CSVs
-                const [resSets, resQuestions] = await Promise.all([fetch(setsUrl), fetch(questionsUrl)]);
+                // Fetch both CSVs via Proxy
+                const [resSets, resQuestions] = await Promise.all([
+                    fetch(finalSetsUrl), 
+                    fetch(finalQuestionsUrl)
+                ]);
+
+                if(!resSets.ok || !resQuestions.ok) {
+                    throw new Error("গুগল শীটের লিঙ্ক থেকে ডাটা পাওয়া যায়নি। লিঙ্ক সঠিক আছে কিনা যাচাই করুন।");
+                }
+
                 const setsCsv = await resSets.text();
                 const questionsCsv = await resQuestions.text();
 
@@ -196,7 +209,7 @@
                 const setsMap = {};
                 for(let i = 1; i < setsRows.length; i++) {
                     const row = setsRows[i];
-                    if(row.length >= 2) {
+                    if(row && row.length >= 2) {
                         const setNo = row[0];
                         setsMap[setNo] = {
                             setNo: setNo,
@@ -211,12 +224,12 @@
                 // Parse Questions (Sheet 2) and map to Sets
                 for(let i = 1; i < questionsRows.length; i++) {
                     const row = questionsRows[i];
-                    if(row.length >= 8) {
+                    if(row && row.length >= 8) {
                         const setN = row[0];
                         if(setsMap[setN]) {
                             setsMap[setN].questions.push({
                                 q: row[1],
-                                imgUrl: row[2],
+                                imgUrl: row[2] || '',
                                 options: [row[3], row[4], row[5], row[6]],
                                 ans: (parseInt(row[7]) || 1) - 1 // 1-4 to 0-3
                             });
@@ -224,7 +237,12 @@
                     }
                 }
 
-                // Batch upload/save to Firestore
+                if(Object.keys(setsMap).length === 0) {
+                    alert("শীট থেকে কোনো সেট বা বিষয় পাওয়া যায়নি। গুগল শীটের ফরম্যাট চেক করুন।");
+                    return;
+                }
+
+                // Batch upload to Firestore
                 const batch = db.batch();
                 Object.keys(setsMap).forEach(key => {
                     const setObj = setsMap[key];
