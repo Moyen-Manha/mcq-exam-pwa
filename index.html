@@ -10,7 +10,6 @@
     <meta name="theme-color" content="#2563eb">
     <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
@@ -38,20 +37,20 @@
         <!-- Section 1: Payment Form -->
         <div id="paymentSection" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-slate-900">৩টি মডেল টেস্ট প্যাকেজ</h2>
-                <p class="text-slate-500 text-sm mt-1">মাত্র ৫০ টাকায় অংশ নিন</p>
+                <h2 class="text-2xl font-bold text-slate-900">৩টি বিশেষ পরীক্ষা মডেল টেস্ট</h2>
+                <p class="text-slate-500 text-sm mt-1">মাত্র ৫০ টাকায় অংশ নিন এবং নিজেকে যাচাই করুন</p>
             </div>
 
             <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
                 <h3 class="font-semibold text-blue-900 text-sm mb-1">পেমেন্ট করার নিয়ম:</h3>
-                <p class="text-xs text-blue-800">বিকাশ/নগদ (Personal): <span class="font-bold">01722166666</span></p>
-                <p class="text-xs text-blue-800 mt-1">Send Money করে নিচে আপনার তথ্য ও TrxID সাবমিট করুন।</p>
+                <p class="text-xs text-blue-800">১. আমাদের বিকাশ/নগদ নম্বর: <span class="font-bold">01722166666</span> (Personal)</p>
+                <p class="text-xs text-blue-800 mt-1">২. ৫০ টাকা Send Money করে নিচের বক্সে আপনার মোবাইল ও TrxID দিন।</p>
             </div>
 
             <form id="payForm" onsubmit="submitPayment(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">আপনার নাম</label>
-                    <input type="text" id="userName" required placeholder="উদাহরণ: মায়েন উদ্দিন" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 text-sm">
+                    <input type="text" id="userName" required placeholder="উদাহরণ: মায়েন উদ্দিন" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল নম্বর (লগইন আইডি)</label>
@@ -90,46 +89,27 @@
             <button onclick="location.reload()" class="mt-4 bg-amber-600 text-white text-xs px-4 py-2 rounded-lg font-bold">স্ট্যাটাস চেক করুন</button>
         </div>
 
-        <!-- Section 4: Exam Dashboard -->
+        <!-- Section 4: Exam Subject Choice Dashboard -->
         <div id="examDashboard" class="hidden space-y-4">
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                 <div>
                     <h2 id="welcomeText" class="font-bold text-slate-900">স্বাগতম!</h2>
-                    <p class="text-xs text-slate-500">আপনার পরীক্ষা প্যাকেজ একটিভ রয়েছে</p>
+                    <p class="text-xs text-slate-500">আপনার পছন্দের বিষয়টি নির্বাচন করে পরীক্ষা শুরু করুন</p>
                 </div>
                 <span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">Approved</span>
             </div>
 
-            <div class="space-y-3">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-slate-800 text-sm">পরীক্ষা ১: সাধারণ জ্ঞান ও এআই</h3>
-                        <p class="text-xs text-slate-500">সময়: ৩ মিনিট | প্রশ্ন: ৩টি</p>
-                    </div>
-                    <button onclick="startExam(1)" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition">শুরু করুন</button>
-                </div>
-                <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-slate-800 text-sm">পরীক্ষা ২: গণিত ও যুক্তি</h3>
-                        <p class="text-xs text-slate-500">সময়: ৩ মিনিট | প্রশ্ন: ৩টি</p>
-                    </div>
-                    <button onclick="startExam(2)" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition">শুরু করুন</button>
-                </div>
-                <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-slate-800 text-sm">পরীক্ষা ৩: বাংলা ও ইংরেজি</h3>
-                        <p class="text-xs text-slate-500">সময়: ৩ মিনিট | প্রশ্ন: ৩টি</p>
-                    </div>
-                    <button onclick="startExam(3)" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition">শুরু করুন</button>
-                </div>
+            <!-- Subject List Container -->
+            <div id="subjectList" class="space-y-3">
+                <p class="text-xs text-slate-400">বিষয় লোড হচ্ছে...</p>
             </div>
         </div>
 
         <!-- Section 5: Live MCQ Exam Screen -->
         <div id="mcqScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div class="flex justify-between items-center pb-4 mb-4 border-b border-slate-100">
-                <span id="questionCount" class="text-xs font-bold text-blue-600">প্রশ্ন ১/৩</span>
-                <span class="text-xs text-red-500 font-bold">⏱️ 03:00</span>
+                <span id="questionCount" class="text-xs font-bold text-blue-600">প্রশ্ন ১/১</span>
+                <span id="activeSubjectTitle" class="text-xs text-slate-500 font-bold">বিষয়</span>
             </div>
             <div id="questionContainer" class="space-y-4"></div>
             <button onclick="nextQuestion()" class="w-full mt-6 bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition text-sm">
@@ -143,9 +123,9 @@
             <h2 class="text-2xl font-bold text-slate-900">পরীক্ষা সম্পন্ন!</h2>
             <div class="bg-slate-50 p-4 rounded-xl my-6">
                 <span class="text-xs text-slate-500 block mb-1">মোট স্কোর</span>
-                <span id="scoreText" class="text-3xl font-extrabold text-blue-600">০/৩</span>
+                <span id="scoreText" class="text-3xl font-extrabold text-blue-600">০/০</span>
             </div>
-            <button onclick="backToDashboard()" class="w-full bg-slate-900 text-white font-semibold py-3 rounded-xl transition text-sm">ড্যাশবোর্ডে ফিরুন</button>
+            <button onclick="backToDashboard()" class="w-full bg-slate-900 text-white font-semibold py-3 rounded-xl transition text-sm">বিষয় তালিকায় ফিরুন</button>
         </div>
 
     </main>
@@ -161,9 +141,7 @@
             measurementId: "G-5W6KJQZWW8"
         };
         
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         function switchTab(type) {
@@ -231,6 +209,7 @@
                     document.getElementById('authTabs').classList.add('hidden');
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('examDashboard').classList.remove('hidden');
+                    loadSubjects();
                 } else {
                     alert("আপনার পেমেন্ট বাতিল করা হয়েছে।");
                 }
@@ -239,28 +218,60 @@
             }
         }
 
-        // Exam Logic
-        const sampleQuestions = [
-            { q: "বাংলাদেশের জাতীয় ফল কোনটি?", options: ["আম", "কাঁঠাল", "লিচু", "কলা"], ans: 1 },
-            { q: "AI এর পূর্ণরূপ কী?", options: ["Automated Intelligence", "Artificial Intelligence", "Active Integration", "None"], ans: 1 },
-            { q: "২ + ২ × ২ = কত?", options: ["৬", "৮", "৪", "۱۰"], ans: 0 }
-        ];
+        // Fetch Subjects for Students Choice
+        let currentQuestions = [];
         let currentQIndex = 0, score = 0;
 
-        function startExam(id) {
-            currentQIndex = 0; score = 0;
+        function loadSubjects() {
+            const list = document.getElementById('subjectList');
+            db.collection('exams').get().then(snapshot => {
+                if(snapshot.empty) {
+                    list.innerHTML = "<p class='text-xs text-slate-500'>বর্তমানে কোনো পরীক্ষা উপলব্ধ নেই।</p>";
+                    return;
+                }
+                let html = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const qCount = data.questions ? data.questions.length : 0;
+                    html += `
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">${data.title}</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">প্রশ্ন সংখ্যা: ${qCount} টি</p>
+                            </div>
+                            <button onclick="startExam('${doc.id}')" ${qCount === 0 ? 'disabled' : ''} class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:bg-slate-300">
+                                পরীক্ষা শুরু করুন
+                            </button>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            });
+        }
+
+        async function startExam(docId) {
+            const doc = await db.collection('exams').doc(docId).get();
+            if(!doc.exists) return;
+
+            const data = doc.data();
+            currentQuestions = data.questions || [];
+            if(currentQuestions.length === 0) return alert("এই বিষয়ে কোনো প্রশ্ন নেই!");
+
+            currentQIndex = 0; 
+            score = 0;
+            document.getElementById('activeSubjectTitle').innerText = data.title;
             document.getElementById('examDashboard').classList.add('hidden');
             document.getElementById('mcqScreen').classList.remove('hidden');
             renderQuestion();
         }
 
         function renderQuestion() {
-            const q = sampleQuestions[currentQIndex];
-            document.getElementById('questionCount').innerText = `প্রশ্ন ${currentQIndex + 1}/${sampleQuestions.length}`;
-            let html = `<h3 class="font-bold text-slate-800 mb-3">${q.q}</h3><div class="space-y-2">`;
+            const q = currentQuestions[currentQIndex];
+            document.getElementById('questionCount').innerText = `প্রশ্ন ${currentQIndex + 1}/${currentQuestions.length}`;
+            let html = `<h3 class="font-bold text-slate-800 mb-3 text-sm">${q.q}</h3><div class="space-y-2">`;
             q.options.forEach((opt, idx) => {
-                html += `<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer">
-                    <input type="radio" name="option" value="${idx}"> <span class="text-sm">${opt}</span>
+                html += `<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
+                    <input type="radio" name="option" value="${idx}"> <span class="text-sm text-slate-700">${opt}</span>
                 </label>`;
             });
             document.getElementById('questionContainer').innerHTML = html + `</div>`;
@@ -269,21 +280,22 @@
         function nextQuestion() {
             const selected = document.querySelector('input[name="option"]:checked');
             if (!selected) return alert("উত্তর বেছে নিন!");
-            if (parseInt(selected.value) === sampleQuestions[currentQIndex].ans) score++;
+            if (parseInt(selected.value) === currentQuestions[currentQIndex].ans) score++;
             currentQIndex++;
-            if (currentQIndex < sampleQuestions.length) renderQuestion();
+            if (currentQIndex < currentQuestions.length) renderQuestion();
             else showResult();
         }
 
         function showResult() {
             document.getElementById('mcqScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
-            document.getElementById('scoreText').innerText = `${score}/${sampleQuestions.length}`;
+            document.getElementById('scoreText').innerText = `${score}/${currentQuestions.length}`;
         }
 
         function backToDashboard() {
             document.getElementById('resultScreen').classList.add('hidden');
             document.getElementById('examDashboard').classList.remove('hidden');
+            loadSubjects();
         }
 
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
