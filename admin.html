@@ -52,12 +52,12 @@
                 <form onsubmit="syncGoogleSheet(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">১ম শীট CSV URL (Sets Info - বিষয়, সময়, মার্ক্স)</label>
-                        <input type="url" id="setsUrl" required placeholder="১ম ট্যাবের CSV লিংক অথবা গুগল শীট লিংক দিন" class="w-full p-2.5 border rounded-xl text-sm">
+                        <input type="url" id="setsUrl" required placeholder="১ম ট্যাবের CSV লিংক দিন" class="w-full p-2.5 border rounded-xl text-sm">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">২য় শীট CSV URL (Questions Info - প্রশ্ন ও অপশনসমূহ)</label>
-                        <input type="url" id="questionsUrl" required placeholder="২য় ট্যাবের CSV লিংক অথবা গুগল শীট লিংক দিন" class="w-full p-2.5 border rounded-xl text-sm">
+                        <input type="url" id="questionsUrl" required placeholder="২য় ট্যাবের CSV লিংক দিন" class="w-full p-2.5 border rounded-xl text-sm">
                     </div>
 
                     <button type="submit" id="btnSync" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-blue-700 transition">
@@ -164,42 +164,17 @@
             });
         }
 
-        // Helper to fetch CSV via proxy with fallback
-        async function fetchCSVWithProxy(rawUrl) {
-            let targetUrl = rawUrl;
-            
-            // Auto convert Google Sheet web link to CSV output link if needed
-            if(targetUrl.includes('docs.google.com/spreadsheets') && !targetUrl.includes('output=csv')) {
-                if(targetUrl.includes('pubhtml')) {
-                    targetUrl = targetUrl.replace('pubhtml', 'pub?output=csv');
-                } else if(!targetUrl.includes('output=csv')) {
-                    targetUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 'output=csv';
-                }
-            }
-
-            const proxies = [
-                url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                url => url
-            ];
-
-            for (let proxyFn of proxies) {
-                try {
-                    const fetchUrl = proxyFn(targetUrl);
-                    const res = await fetch(fetchUrl);
-                    if (res.ok) {
-                        const text = await res.text();
-                        if (text && text.length > 10) return text;
-                    }
-                } catch (e) {
-                    console.warn("Proxy failed, trying next...", e);
-                }
-            }
-            throw new Error("গুগল শীটের লিঙ্ক থেকে ডাটা রিড করা সম্ভব হয়নি। লিঙ্কটি সঠিক ও Publish to Web করা আছে কিনা নিশ্চিত করুন।");
+        // Fetch CSV using AllOrigins CORS proxy
+        async function fetchCSV(rawUrl) {
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rawUrl)}`;
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error("CORS Proxy দিয়ে ডাটা আনতে সমস্যা হয়েছে।");
+            const data = await res.json();
+            return data.contents;
         }
 
         function parseCSVRows(text) {
-            const lines = text.split('\n');
+            const lines = text.split(/\r?\n/);
             return lines.map(line => {
                 if(!line.trim()) return null;
                 const matches = line.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
@@ -218,8 +193,8 @@
 
             try {
                 const [setsCsv, questionsCsv] = await Promise.all([
-                    fetchCSVWithProxy(setsUrl),
-                    fetchCSVWithProxy(questionsUrl)
+                    fetchCSV(setsUrl),
+                    fetchCSV(questionsUrl)
                 ]);
 
                 const setsRows = parseCSVRows(setsCsv);
