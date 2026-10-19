@@ -63,7 +63,8 @@
             const list = document.getElementById('studentList');
             list.innerHTML = "<p class='text-xs text-slate-400'>ডাটা লোড হচ্ছে...</p>";
 
-            db.collection('students').orderBy('createdAt', 'desc').get().then(snapshot => {
+            // orderBy সরিয়ে সরাসরি ফেচ করা হলো যাতে ইনডেক্সজনিত কোনো সমস্যা না হয়
+            db.collection('students').get().then(snapshot => {
                 if(snapshot.empty) {
                     list.innerHTML = "<p class='text-xs text-slate-500'>কোনো আবেদন নেই।</p>";
                     return;
@@ -74,19 +75,19 @@
                     const data = doc.data();
                     let statusBadge = data.status === 'approved' 
                         ? '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Approved</span>' 
-                        : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded">Pending</span>';
+                        : (data.status === 'rejected' ? '<span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded">Rejected</span>' : '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded">Pending</span>');
 
                     html += `
-                        <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50">
+                        <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50 mb-3">
                             <div>
-                                <h3 class="font-bold text-sm text-slate-800">${data.name} ${statusBadge}</h3>
+                                <h3 class="font-bold text-sm text-slate-800">${data.name || 'নাম নেই'} ${statusBadge}</h3>
                                 <p class="text-xs text-slate-600">ফোন: <span class="font-semibold">${data.phone}</span></p>
                                 <p class="text-xs text-blue-600 font-mono">TrxID: ${data.trxId}</p>
                             </div>
                             <div class="flex gap-2">
-                                ${data.status === 'pending' ? `
-                                    <button onclick="updateStatus('${data.phone}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
-                                    <button onclick="updateStatus('${data.phone}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
+                                ${data.status === 'pending' || !data.status ? `
+                                    <button onclick="updateStatus('${data.phone}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-green-700">Approve</button>
+                                    <button onclick="updateStatus('${data.phone}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-red-700">Reject</button>
                                 ` : `
                                     <button onclick="updateStatus('${data.phone}', 'pending')" class="bg-slate-300 text-slate-700 text-xs px-2 py-1 rounded">Reset</button>
                                 `}
@@ -95,6 +96,8 @@
                     `;
                 });
                 list.innerHTML = html;
+            }).catch(err => {
+                list.innerHTML = `<p class='text-xs text-red-500'>ত্রুটি: ${err.message}</p>`;
             });
         }
 
