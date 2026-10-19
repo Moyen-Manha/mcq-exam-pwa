@@ -13,31 +13,102 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-4">
 
-    <div class="max-w-2xl mx-auto bg-white rounded-2xl p-6 shadow-md">
-        <h1 class="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">পেমেন্ট ম্যানেজমেন্ট (Admin)</h1>
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl p-6 shadow-md space-y-8">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center border-b pb-4">
+            <h1 class="text-2xl font-bold text-slate-800">ExamPrep এডমিন কন্ট্রোল প্যানেল</h1>
+        </div>
 
         <!-- PIN Protection -->
         <div id="pinBox" class="space-y-3">
             <p class="text-sm text-slate-600">এডমিন পেজে ঢুকতে গোপন পিন লিখুন:</p>
             <input type="password" id="adminPin" placeholder="পিন লিখুন (Default: 1234)" class="w-full p-2.5 border rounded-xl text-sm">
-            <button onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl">প্রবেশ করুন</button>
+            <button onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl font-bold">প্রবেশ করুন</button>
         </div>
 
-        <!-- Student Requests List -->
-        <div id="adminContent" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="font-bold text-slate-700">আবেদনকারীদের তালিকা</h2>
-                <button onclick="loadStudents()" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg font-bold">রিফ্রেশ করুন</button>
+        <!-- Main Admin Dashboard -->
+        <div id="adminContent" class="hidden space-y-8">
+
+            <!-- Tab Buttons -->
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchAdminTab('students')" id="tabStudentsBtn" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow">পেমেন্ট রিকোয়েস্ট</button>
+                <button onclick="switchAdminTab('questions')" id="tabQuestionsBtn" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600">প্রশ্ন ও বিষয় যোগ করুন</button>
             </div>
 
-            <div id="studentList" class="space-y-3 mt-3">
-                <p class="text-xs text-slate-400">লোডিং...</p>
+            <!-- Tab 1: Student Requests -->
+            <div id="tabStudentsSection" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-slate-700">আবেদনকারীদের তালিকা</h2>
+                    <button onclick="loadStudents()" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg font-bold">রিফ্রেশ করুন</button>
+                </div>
+                <div id="studentList" class="space-y-3">
+                    <p class="text-xs text-slate-400">লোডিং...</p>
+                </div>
             </div>
+
+            <!-- Tab 2: Question & Subject Management -->
+            <div id="tabQuestionsSection" class="hidden space-y-6">
+                <h2 class="font-bold text-slate-700 text-lg border-b pb-2">নতুন বিষয় বা প্রশ্ন যুক্ত করুন</h2>
+                
+                <form onsubmit="addQuestion(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">পরীক্ষার বিষয় (Subject Name)</label>
+                        <input type="text" id="subjectName" required placeholder="যেমন: সাধারণ জ্ঞান, বাংলা, ইংরেজি" class="w-full p-2.5 border rounded-xl text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">প্রশ্ন (Question)</label>
+                        <input type="text" id="qText" required placeholder="প্রশ্নটি লিখুন" class="w-full p-2.5 border rounded-xl text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">অপশন ১</label>
+                            <input type="text" id="opt0" required placeholder="অপশন ১" class="w-full p-2.5 border rounded-xl text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">অপশন ২</label>
+                            <input type="text" id="opt1" required placeholder="অপশন ২" class="w-full p-2.5 border rounded-xl text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">অপশন ৩</label>
+                            <input type="text" id="opt2" required placeholder="অপশন ৩" class="w-full p-2.5 border rounded-xl text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">অপশন ৪</label>
+                            <input type="text" id="opt3" required placeholder="অপশন ৪" class="w-full p-2.5 border rounded-xl text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">সঠিক উত্তর নির্বাচন করুন</label>
+                        <select id="correctAns" class="w-full p-2.5 border rounded-xl text-sm bg-white">
+                            <option value="0">অপশন ১ সঠিক</option>
+                            <option value="1">অপশন ২ সঠিক</option>
+                            <option value="2">অপশন ৩ সঠিক</option>
+                            <option value="3">অপশন ৪ সঠিক</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="btnSaveQuestion" class="w-full bg-green-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-green-700">
+                        প্রশ্ন ও বিষয় সেভ করুন
+                    </button>
+                </form>
+
+                <!-- Saved Exams List -->
+                <div class="mt-6">
+                    <h3 class="font-bold text-slate-700 text-sm mb-3">বিদ্যমান বিষয় ও প্রশ্নসমূহ</h3>
+                    <div id="examList" class="space-y-3">
+                        <p class="text-xs text-slate-400">লোডিং...</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // আপনার ফায়ারবেস কনফিগারেশন এখানে বসানো আছে (বা আপনার আসল কনফিিগ বসাবেন)
         const firebaseConfig = {
             apiKey: "AIzaSyBbN4F7Ys23miaMZZR9Xf8NCgBahsTw6BI",
             authDomain: "mcqexm.firebaseapp.com",
@@ -48,9 +119,7 @@
             measurementId: "G-5W6KJQZWW8"
         };
         
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         function loginAdmin() {
@@ -59,11 +128,27 @@
                 document.getElementById('pinBox').classList.add('hidden');
                 document.getElementById('adminContent').classList.remove('hidden');
                 loadStudents();
+                loadExams();
             } else {
                 alert("ভুল পিন নম্বর!");
             }
         }
 
+        function switchAdminTab(type) {
+            if(type === 'students') {
+                document.getElementById('tabStudentsSection').classList.remove('hidden');
+                document.getElementById('tabQuestionsSection').classList.add('hidden');
+                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
+                document.getElementById('tabQuestionsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+            } else {
+                document.getElementById('tabStudentsSection').classList.add('hidden');
+                document.getElementById('tabQuestionsSection').classList.remove('hidden');
+                document.getElementById('tabQuestionsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
+                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+            }
+        }
+
+        // Student Requests Logic
         function loadStudents() {
             const list = document.getElementById('studentList');
             list.innerHTML = "<p class='text-xs text-slate-400'>ডাটা লোড হচ্ছে...</p>";
@@ -77,12 +162,8 @@
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const docId = doc.id; // ডকুমেন্টের আইডি বা ফোন নম্বর
-                    const studentName = data.name || 'নাম নেই';
-                    const studentPhone = data.phone || docId;
-                    const trxId = data.trxId || 'নেই';
+                    const docId = doc.id;
                     const status = data.status || 'pending';
-
                     let statusBadge = status === 'approved' 
                         ? '<span class="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-bold">Approved</span>' 
                         : (status === 'rejected' ? '<span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-bold">Rejected</span>' : '<span class="bg-amber-100 text-amber-700 text-xs px-2.5 py-1 rounded-full font-bold">Pending</span>');
@@ -90,9 +171,9 @@
                     html += `
                         <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50 shadow-sm">
                             <div>
-                                <h3 class="font-bold text-sm text-slate-800">${studentName} &nbsp; ${statusBadge}</h3>
-                                <p class="text-xs text-slate-600 mt-1">ফোন: <span class="font-semibold">${studentPhone}</span></p>
-                                <p class="text-xs text-blue-600 font-mono mt-0.5">TrxID: ${trxId}</p>
+                                <h3 class="font-bold text-sm text-slate-800">${data.name || 'নাম নেই'} &nbsp; ${statusBadge}</h3>
+                                <p class="text-xs text-slate-600 mt-1">ফোন: <span class="font-semibold">${data.phone || docId}</span></p>
+                                <p class="text-xs text-blue-600 font-mono mt-0.5">TrxID: ${data.trxId || 'নেই'}</p>
                             </div>
                             <div class="flex gap-2">
                                 ${status === 'pending' ? `
@@ -106,8 +187,6 @@
                     `;
                 });
                 list.innerHTML = html;
-            }).catch(err => {
-                list.innerHTML = `<p class='text-xs text-red-500'>ত্রুটি: ${err.message}</p>`;
             });
         }
 
@@ -115,9 +194,78 @@
             db.collection('students').doc(docId).update({ status: status }).then(() => {
                 alert("স্ট্যাটাস সফলভাবে আপডেট করা হয়েছে!");
                 loadStudents();
-            }).catch(err => {
-                alert("আপডেট ব্যর্থ: " + err.message);
             });
+        }
+
+        // Question & Subject Upload Logic
+        async function addQuestion(e) {
+            e.preventDefault();
+            const subject = document.getElementById('subjectName').value.trim();
+            const q = document.getElementById('qText').value.trim();
+            const opt0 = document.getElementById('opt0').value.trim();
+            const opt1 = document.getElementById('opt1').value.trim();
+            const opt2 = document.getElementById('opt2').value.trim();
+            const opt3 = document.getElementById('opt3').value.trim();
+            const ans = parseInt(document.getElementById('correctAns').value);
+
+            const newQuestion = { q: q, options: [opt0, opt1, opt2, opt3], ans: ans };
+
+            try {
+                const examRef = db.collection('exams').doc(subject);
+                const doc = await examRef.get();
+
+                if (doc.exists) {
+                    await examRef.update({
+                        questions: firebase.firestore.FieldValue.arrayUnion(newQuestion)
+                    });
+                } else {
+                    await examRef.set({
+                        title: subject,
+                        questions: [newQuestion]
+                    });
+                }
+
+                alert(`"${subject}" বিষয়ের জন্য প্রশ্ন সফলভাবে যুক্ত হয়েছে!`);
+                document.getElementById('qText').value = '';
+                document.getElementById('opt0').value = '';
+                document.getElementById('opt1').value = '';
+                document.getElementById('opt2').value = '';
+                document.getElementById('opt3').value = '';
+                loadExams();
+            } catch (err) {
+                alert("ত্রুটি: " + err.message);
+            }
+        }
+
+        function loadExams() {
+            const list = document.getElementById('examList');
+            db.collection('exams').get().then(snapshot => {
+                if(snapshot.empty) {
+                    list.innerHTML = "<p class='text-xs text-slate-400'>কোনো বিষয় যোগ করা হয়নি।</p>";
+                    return;
+                }
+                let html = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const qCount = data.questions ? data.questions.length : 0;
+                    html += `
+                        <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
+                            <div>
+                                <span class="font-bold text-slate-800 text-sm">${data.title}</span>
+                                <p class="text-slate-500 mt-0.5">মোট প্রশ্ন: ${qCount} টি</p>
+                            </div>
+                            <button onclick="deleteExam('${doc.id}')" class="text-red-500 hover:underline">মুছে ফেলুন</button>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            });
+        }
+
+        function deleteExam(id) {
+            if(confirm("আপনি কি এই বিষয় ও এর প্রশ্নগুলো মুছে ফেলতে চান?")) {
+                db.collection('exams').doc(id).delete().then(() => loadExams());
+            }
         }
     </script>
 </body>
