@@ -177,7 +177,7 @@
             e.preventDefault();
             const apiKey = document.getElementById('geminiApiKey').value.trim();
             if(!apiKey) {
-                alert("অনুগ্রহ করে আপনার Gemini API Key টি ইনপুট বক্সে বসান! (Google AI Studio থেকে ফ্রীতে নেয়া যায়)");
+                alert("অনুগ্রহ করে আপনার Gemini API Key টি ইনপুট বক্সে বসান!");
                 return;
             }
 
@@ -205,24 +205,48 @@ Format:
   }
 ]`;
 
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            // ট্রাই করার জন্য মডেলসমূহের লিস্ট
+            const models = [
+                'gemini-2.5-flash',
+                'gemini-1.5-flash',
+                'gemini-pro'
+            ];
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
+            let success = false;
+            let replyText = "";
+            let lastError = "";
 
-                const resData = await response.json();
+            for (let model of models) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
 
-                if (!resData.candidates || !resData.candidates[0] || !resData.candidates[0].content) {
-                    if (resData.error) throw new Error(resData.error.message);
-                    throw new Error("AI থেকে কোনো উত্তর পাওয়া যায়নি। API Key সঠিকভাবে দেওয়া আছে কিনা যাচাই করুন।");
+                    const resData = await response.json();
+
+                    if (resData.candidates && resData.candidates[0] && resData.candidates[0].content) {
+                        replyText = resData.candidates[0].content.parts[0].text;
+                        success = true;
+                        break; // সফল হলে লুপ থেকে বের হয়ে যাবে
+                    } else if (resData.error) {
+                        lastError = resData.error.message;
+                    }
+                } catch (err) {
+                    lastError = err.message;
                 }
+            }
 
-                let replyText = resData.candidates[0].content.parts[0].text;
-                
+            if (!success) {
+                btn.disabled = false;
+                btn.innerText = "✨ বোর্ড মানের প্রশ্ন তৈরি করুন";
+                alert("প্রশ্ন তৈরিতে ত্রুটি ঘটেছে: " + lastError);
+                return;
+            }
+
+            try {
                 const jsonMatch = replyText.match(/\[\s*\{[\s\S]*\}\s*\]/);
                 if (jsonMatch) {
                     replyText = jsonMatch[0];
@@ -232,9 +256,8 @@ Format:
 
                 generatedQuestionsData = JSON.parse(replyText);
                 renderQuestionsForReview();
-
             } catch (err) {
-                alert("প্রশ্ন তৈরিতে ত্রুটি ঘটেছে: " + err.message);
+                alert("JSON পার্স করতে সমস্যা হয়েছে: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "✨ বোর্ড মানের প্রশ্ন তৈরি করুন";
