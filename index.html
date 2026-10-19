@@ -212,13 +212,13 @@
             const phone = document.getElementById('loginPhone').value.trim();
 
             try {
-                const doc = await db.collection('students').doc(phone).get();
-                if(!doc.exists()) {
+                const docRef = await db.collection('students').doc(phone).get();
+                if(!docRef.exists) { // এটি ঠিক করা হয়েছে
                     alert("এই নম্বর দিয়ে কোনো আবেদন পাওয়া যায়নি! আগে পেমেন্ট সাবমিট করুন।");
                     return;
                 }
 
-                const data = doc.data();
+                const data = docRef.data();
                 if(data.status === 'pending') {
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('authTabs').classList.add('hidden');
