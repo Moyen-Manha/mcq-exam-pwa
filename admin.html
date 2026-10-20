@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
@@ -43,43 +43,87 @@
 
             <!-- Tab 2: AI Question Generator -->
             <div id="tabAiSection" class="hidden space-y-6">
-                <h2 class="font-bold text-slate-700 text-lg border-b pb-2">বোর্ড স্ট্যান্ডার্ড AI প্রশ্ন জেনারেটর</h2>
-                
-                <form onsubmit="generateAiQuestions(event)" class="space-y-4 bg-slate-50 p-4 rounded-xl border">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Gemini API Key (Google AI Studio থেকে প্রাপ্ত)</label>
-                        <input type="password" id="geminiApiKey" placeholder="আপনার Gemini API Key বসান (যেমন: AIzaSy...)" class="w-full p-2.5 border rounded-xl text-sm bg-white font-mono">
-                        <p class="text-[11px] text-slate-500 mt-1">* aistudio.google.com থেকে বিনামূল্যে আপনার API Key নিতে পারেন।</p>
-                    </div>
+                <h2 class="font-bold text-slate-700 text-lg border-b pb-2">বোর্ড স্ট্যান্ডার্ড AI প্রশ্ন জেনারেটর (বইয়ের PDF থেকে)</h2>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">পরীক্ষার বিষয় ও অধ্যায়</label>
-                        <input type="text" id="subjectTitle" required placeholder="যেমন: রসায়ন (৩য় অধ্যায়)" class="w-full p-2.5 border rounded-xl text-sm bg-white">
-                    </div>
+                <form id="genForm" onsubmit="generateAiQuestions(event)" class="space-y-5">
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">অধ্যায়/বইয়ের মূল বিবরণ বা নির্দেশিকা</label>
-                        <textarea id="bookContext" rows="3" required placeholder="টপিক বা বইয়ের অংশ লিখুন..." class="w-full p-2.5 border rounded-xl text-sm bg-white"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">প্রশ্ন সংখ্যা</label>
-                            <input type="number" id="qCount" value="15" min="1" max="30" class="w-full p-2 border rounded-xl text-sm bg-white">
+                    <!-- ১. API Key ও মডেল -->
+                    <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
+                        <h3 class="text-xs font-bold text-slate-800">১. Gemini API Key ও মডেল</h3>
+                        <input type="password" id="geminiApiKey" onchange="persistApiKey(); loadModels()" placeholder="Gemini API Key বসান (যেমন: AIzaSy...)" class="w-full p-2.5 border rounded-xl text-sm bg-white font-mono">
+                        <label class="flex items-center gap-2 text-[11px] text-slate-600">
+                            <input type="checkbox" id="rememberKey" onchange="persistApiKey()"> এই ডিভাইসে Key মনে রাখুন (শুধু নিজের কম্পিউটারে টিক দিন)
+                        </label>
+                        <div class="flex gap-2">
+                            <select id="modelSelect" class="flex-1 p-2.5 border rounded-xl text-sm bg-white">
+                                <option value="">— আগে API Key দিন —</option>
+                            </select>
+                            <button type="button" onclick="loadModels()" class="bg-slate-200 text-slate-700 text-xs px-3 rounded-xl font-bold">মডেল লোড</button>
                         </div>
+                        <p id="modelInfo" class="text-[11px] text-slate-500">aistudio.google.com থেকে বিনামূল্যে API Key নিতে পারেন। মডেল তালিকা সরাসরি Google থেকে আসে, তাই নাম বদলালেও সমস্যা হবে না।</p>
+                    </div>
+
+                    <!-- ২. বিষয় ও সেটিংস -->
+                    <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
+                        <h3 class="text-xs font-bold text-slate-800">২. বিষয় ও পরীক্ষার সেটিংস</h3>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">সময় (মিনিট)</label>
-                            <input type="number" id="timeLimit" value="25" min="1" class="w-full p-2 border rounded-xl text-sm bg-white">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">পরীক্ষার বিষয়ের নাম</label>
+                            <input type="text" id="subjectTitle" placeholder="যেমন: রসায়ন" class="w-full p-2.5 border rounded-xl text-sm bg-white">
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">মার্কস/প্রশ্ন</label>
-                            <input type="number" id="marksPerQ" value="1" step="0.5" class="w-full p-2 border rounded-xl text-sm bg-white">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">সময় (মিনিট)</label>
+                                <input type="number" id="timeLimit" value="25" min="1" class="w-full p-2 border rounded-xl text-sm bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">মার্কস/প্রশ্ন</label>
+                                <input type="number" id="marksPerQ" value="1" step="0.5" min="0.5" class="w-full p-2 border rounded-xl text-sm bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">কঠিনতা</label>
+                                <select id="levelSelect" class="w-full p-2 border rounded-xl text-sm bg-white">
+                                    <option value="mixed">মিশ্র</option>
+                                    <option value="easy">সহজ</option>
+                                    <option value="medium">মাঝারি</option>
+                                    <option value="hard">কঠিন</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <button type="submit" id="btnGenerate" class="w-full bg-purple-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-purple-700 transition">
-                        ✨ বোর্ড মানের প্রশ্ন তৈরি করুন
-                    </button>
+                    <!-- ৩. PDF আপলোড -->
+                    <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
+                        <h3 class="text-xs font-bold text-slate-800">৩. বইয়ের PDF আপলোড</h3>
+                        <input type="file" id="pdfInput" accept="application/pdf,.pdf" multiple onchange="handlePdfSelect(this)"
+                               class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-700">
+                        <div id="pdfList" class="space-y-1.5"></div>
+                        <p class="text-[11px] text-slate-500">* প্রতিটি PDF সর্বোচ্চ ৪৫ MB। অধ্যায় ভিত্তিক আলাদা ছোট PDF দিলে দ্রুত হয় ও টোকেন কম লাগে। ফাইল শুধু Google AI-তে পাঠানো হয়, কোথাও সেভ হয় না।</p>
+                    </div>
+
+                    <!-- ৪. অধ্যায় ভিত্তিক নির্দেশনা -->
+                    <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xs font-bold text-slate-800">৪. কোন অধ্যায় থেকে কত প্রশ্ন</h3>
+                            <button type="button" onclick="addChapterRow()" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg font-bold">+ অধ্যায় যোগ করুন</button>
+                        </div>
+                        <div id="chapterRows" class="space-y-3"></div>
+                        <p class="text-xs text-slate-700 font-bold">সর্বমোট প্রশ্ন: <span id="grandTotal">০</span>টি <span class="text-[11px] text-slate-400 font-normal">(একটি সারিতে সর্বোচ্চ ৩০টি)</span></p>
+                    </div>
+
+                    <!-- ৫. অতিরিক্ত নির্দেশনা -->
+                    <div class="bg-slate-50 p-4 rounded-xl border space-y-2">
+                        <h3 class="text-xs font-bold text-slate-800">৫. অতিরিক্ত নির্দেশনা (ঐচ্ছিক)</h3>
+                        <textarea id="extraInstructions" rows="2" placeholder="যেমন: সংখ্যাসূচক প্রশ্নে সূত্র ব্যবহার করুন; পরীক্ষণ অংশ থেকে প্রশ্ন করবেন না..." class="w-full p-2.5 border rounded-xl text-sm bg-white"></textarea>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="submit" id="btnGenerate" class="flex-1 bg-purple-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-purple-700 transition">
+                            ✨ বোর্ড মানের প্রশ্ন তৈরি করুন
+                        </button>
+                        <button type="button" id="btnCancel" onclick="cancelGeneration()" class="hidden bg-red-100 text-red-700 font-bold px-4 rounded-xl text-sm">বন্ধ করুন</button>
+                    </div>
+
+                    <div id="genProgress" class="hidden space-y-1.5 bg-slate-50 border rounded-xl p-3 text-xs"></div>
                 </form>
 
                 <!-- Review Container -->
@@ -88,16 +132,26 @@
                         <h3 class="font-bold text-amber-900 text-sm">AI জেনারেটেড প্রশ্ন (রিভিউ ও এডিট করুন)</h3>
                         <span id="genCountBadge" class="bg-amber-200 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold"></span>
                     </div>
+                    <p id="reviewNote" class="hidden text-[11px] text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1.5"></p>
+                    <p class="text-[11px] text-amber-800">প্রতিটি প্রশ্ন ও উত্তর বইয়ের সাথে মিলিয়ে দেখুন। সঠিক উত্তরের রেডিও বাটন বদলানো যাবে। ব্যাখ্যা ঘরে বইয়ের রেফারেন্স দেওয়া আছে।</p>
 
                     <div id="aiQuestionsList" class="space-y-4"></div>
 
-                    <button onclick="saveApprovedQuestions()" id="btnSaveFinal" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-green-700 transition">
-                        সব চেক করেছি - ফায়ারবেসে সেভ করুন
-                    </button>
+                    <div class="bg-white border border-amber-200 rounded-xl p-3 space-y-2">
+                        <p class="text-xs font-bold text-slate-700">সেভ করার ধরন (এই নামে আগে প্রশ্ন থাকলে):</p>
+                        <label class="flex items-center gap-2 text-xs text-slate-700"><input type="radio" name="saveMode" value="append" checked> পুরনো প্রশ্নের সাথে যোগ করুন</label>
+                        <label class="flex items-center gap-2 text-xs text-slate-700"><input type="radio" name="saveMode" value="replace"> পুরনো প্রশ্ন মুছে এগুলো বসান</label>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="saveQuestions(false)" id="btnSaveDraft" class="col-span-1 bg-slate-600 text-white font-bold py-3 rounded-xl text-xs hover:bg-slate-700 transition">💾 ড্রাফট সেভ</button>
+                        <button onclick="saveQuestions(true)" id="btnSaveFinal" class="col-span-2 bg-green-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-green-700 transition">✅ চেক করেছি – পাবলিশ করুন</button>
+                    </div>
+                    <p class="text-[11px] text-slate-500">পাবলিশ করলেই শিক্ষার্থীরা পরীক্ষার তালিকায় এই বিষয়টি দেখবে। ড্রাফট শিক্ষার্থীদের কাছে দেখায় না।</p>
                 </div>
 
                 <div class="mt-6">
-                    <h3 class="font-bold text-slate-700 text-sm mb-3">ডাটাবেজে সেভ থাকা বিষয়সমূহ</h3>
+                    <h3 class="font-bold text-slate-700 text-sm mb-3">ডাটাবেজে সেভ থাকা বিষয়সমূহ</h3>
                     <div id="examList" class="space-y-3"><p class="text-xs text-slate-400">লোডিং...</p></div>
                 </div>
             </div>
@@ -114,53 +168,92 @@
             appId: "1:232482881612:web:dc976b8f66e03c2480b4e9",
             measurementId: "G-5W6KJQZWW8"
         };
-        
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let generatedQuestionsData = [];
+        // ---------------------------------------------------------------
+        // সাধারণ হেল্পার
+        // ---------------------------------------------------------------
+        const $ = (id) => document.getElementById(id);
+        const bn = (n) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[d]);
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        function esc(s) {
+            return String(s === undefined || s === null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function formatSize(b) {
+            return b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.ceil(b / 1024) + ' KB';
+        }
 
+        const TYPE_LABEL = { knowledge: 'জ্ঞানমূলক', application: 'প্রয়োগমূলক', multi: 'বহুপদী' };
+        const TYPE_BADGE = {
+            knowledge: 'bg-blue-100 text-blue-700',
+            application: 'bg-purple-100 text-purple-700',
+            multi: 'bg-orange-100 text-orange-700'
+        };
+        const OPT_LABELS = ['ক', 'খ', 'গ', 'ঘ'];
+        const MAX_PDF_BYTES = 45 * 1024 * 1024;
+        const MAX_REQUEST_BYTES = 95 * 1024 * 1024;
+        const MAX_PER_ROW = 30;
+
+        let generatedQuestionsData = [];   // রিভিউ তালিকা (options এ ক/খ/গ/ঘ লেবেল ছাড়া)
+        let pdfFiles = [];                 // {id, file, name, size, b64}
+        let chapterRows = [];              // {id, pdfId, chapter, k, a, p}
+        let pdfCounter = 0, rowCounter = 0;
+        let isGenerating = false, cancelRequested = false, currentAbort = null;
+        let progress = [];
+
+        // ---------------------------------------------------------------
+        // লগইন ও ট্যাব
+        // ---------------------------------------------------------------
         function loginAdmin() {
-            const pin = document.getElementById('adminPin').value;
-            if(pin === '1234') {
-                document.getElementById('pinBox').classList.add('hidden');
-                document.getElementById('adminContent').classList.remove('hidden');
+            const pin = $('adminPin').value;
+            if (pin === '1234') {
+                $('pinBox').classList.add('hidden');
+                $('adminContent').classList.remove('hidden');
                 loadStudents();
                 loadExams();
+                initApiKey();
             } else { alert("ভুল পিন!"); }
         }
 
         function switchAdminTab(type) {
-            if(type === 'students') {
-                document.getElementById('tabStudentsSection').classList.remove('hidden');
-                document.getElementById('tabAiSection').classList.add('hidden');
-                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
-                document.getElementById('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+            if (type === 'students') {
+                $('tabStudentsSection').classList.remove('hidden');
+                $('tabAiSection').classList.add('hidden');
+                $('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
+                $('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
             } else {
-                document.getElementById('tabStudentsSection').classList.add('hidden');
-                document.getElementById('tabAiSection').classList.remove('hidden');
-                document.getElementById('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
-                document.getElementById('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+                $('tabStudentsSection').classList.add('hidden');
+                $('tabAiSection').classList.remove('hidden');
+                $('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
+                $('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
             }
         }
 
+        // ---------------------------------------------------------------
+        // পেমেন্ট রিকোয়েস্ট
+        // ---------------------------------------------------------------
         function loadStudents() {
-            const list = document.getElementById('studentList');
+            const list = $('studentList');
             db.collection('students').get().then(snapshot => {
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const status = data.status || 'pending';
+                    const color = status === 'approved' ? 'text-green-600' : (status === 'rejected' ? 'text-red-600' : 'text-amber-600');
                     html += `
                         <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50 shadow-sm">
                             <div>
-                                <h3 class="font-bold text-sm text-slate-800">${data.name || 'নাম নেই'} (${status})</h3>
-                                <p class="text-xs text-slate-600">ফোন: ${data.phone || doc.id}</p>
-                                <p class="text-xs text-blue-600 font-mono">TrxID: ${data.trxId || 'নেই'}</p>
+                                <h3 class="font-bold text-sm text-slate-800">${esc(data.name || 'নাম নেই')} <span class="${color}">(${esc(status)})</span></h3>
+                                <p class="text-xs text-slate-600">ফোন: ${esc(data.phone || doc.id)}</p>
+                                <p class="text-xs text-blue-600 font-mono">TrxID: ${esc(data.trxId || 'নেই')}</p>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="updateStatus('${doc.id}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
-                                <button onclick="updateStatus('${doc.id}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
+                                <button onclick="updateStatus('${esc(doc.id)}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
+                                <button onclick="updateStatus('${esc(doc.id)}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
                             </div>
                         </div>
                     `;
@@ -173,123 +266,534 @@
             db.collection('students').doc(docId).update({ status: status }).then(() => loadStudents());
         }
 
-        async function generateAiQuestions(e) {
-            e.preventDefault();
-            const apiKey = document.getElementById('geminiApiKey').value.trim();
-            if(!apiKey) {
-                alert("অনুগ্রহ করে আপনার Gemini API Key টি ইনপুট বক্সে বসান!");
-                return;
-            }
+        // ---------------------------------------------------------------
+        // API Key ও মডেল
+        // ---------------------------------------------------------------
+        const EXCLUDE_RE = /(tts|image|live|embed|audio|robotics|computer|omni|transcribe|veo|lyria|imagen|banana|research|learnlm|gemma|aqa|antigravity|translate)/i;
 
-            const subject = document.getElementById('subjectTitle').value.trim();
-            const context = document.getElementById('bookContext').value.trim();
-            const qCount = parseInt(document.getElementById('qCount').value);
-            const btn = document.getElementById('btnGenerate');
-
-            btn.disabled = true;
-            btn.innerText = "⏳ AI প্রশ্ন তৈরি করছে...";
-
-            const prompt = `You are an expert SSC MCQ question maker following NCTB Bangladesh curriculum.
-Generate ${qCount} MCQs in Bengali based on this info: "${context}".
-Must include:
-- Knowledge and application level questions
-- Poly-statement questions (বহুপদী সমাপ্তিসূচক প্রশ্ন)
-
-Respond ONLY with a valid JSON array, no extra commentary or markdown formatting.
-Format:
-[
-  {
-    "q": "প্রশ্নটি এখানে লিখুন",
-    "options": ["ক. অপশন ১", "খ. অপশন ২", "গ. অপশন ৩", "ঘ. অপশন ৪"],
-    "ans": 0
-  }
-]`;
-
-            // ট্রাই করার জন্য মডেলসমূহের লিস্ট
-            const models = [
-                'gemini-2.5-flash',
-                'gemini-1.5-flash',
-                'gemini-pro'
-            ];
-
-            let success = false;
-            let replyText = "";
-            let lastError = "";
-
-            for (let model of models) {
-                try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-
-                    const resData = await response.json();
-
-                    if (resData.candidates && resData.candidates[0] && resData.candidates[0].content) {
-                        replyText = resData.candidates[0].content.parts[0].text;
-                        success = true;
-                        break; // সফল হলে লুপ থেকে বের হয়ে যাবে
-                    } else if (resData.error) {
-                        lastError = resData.error.message;
-                    }
-                } catch (err) {
-                    lastError = err.message;
-                }
-            }
-
-            if (!success) {
-                btn.disabled = false;
-                btn.innerText = "✨ বোর্ড মানের প্রশ্ন তৈরি করুন";
-                alert("প্রশ্ন তৈরিতে ত্রুটি ঘটেছে: " + lastError);
-                return;
-            }
-
+        function initApiKey() {
             try {
-                const jsonMatch = replyText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-                if (jsonMatch) {
-                    replyText = jsonMatch[0];
-                } else {
-                    replyText = replyText.replace(/```json|```/g, '').trim();
+                const k = localStorage.getItem('gemini_api_key');
+                if (k) {
+                    $('geminiApiKey').value = k;
+                    $('rememberKey').checked = true;
+                    loadModels();
                 }
+            } catch (e) { /* ignore */ }
+        }
 
-                generatedQuestionsData = JSON.parse(replyText);
-                renderQuestionsForReview();
+        function persistApiKey() {
+            try {
+                if ($('rememberKey').checked && $('geminiApiKey').value.trim()) {
+                    localStorage.setItem('gemini_api_key', $('geminiApiKey').value.trim());
+                } else {
+                    localStorage.removeItem('gemini_api_key');
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // বড় সংস্করণ + flash (লাইট/প্রিভিউ নয়) আগে
+        function modelRank(name) {
+            const m = name.match(/^gemini-(\d+)(?:\.(\d+))?-(flash|pro)(-lite)?(-preview.*)?$/i);
+            if (!m) return /-latest$/.test(name) ? 1 : 0;
+            let score = parseInt(m[1], 10) * 1000 + parseInt(m[2] || '0', 10) * 10;
+            if (m[3].toLowerCase() === 'flash') score += 5; else score += 2;
+            if (m[4]) score -= 3;
+            if (m[5]) score -= 1;
+            return score;
+        }
+
+        function pickDefaultModel(names) {
+            const stableFlash = names.filter(n => /^gemini-\d+(\.\d+)?-flash$/.test(n));
+            return stableFlash[0] || names[0] || '';
+        }
+
+        async function loadModels() {
+            const key = $('geminiApiKey').value.trim();
+            const sel = $('modelSelect');
+            const info = $('modelInfo');
+            if (!key) { info.textContent = 'আগে API Key দিন।'; return; }
+            info.textContent = '⏳ মডেল তালিকা আনা হচ্ছে...';
+            try {
+                let all = [], token = '';
+                for (let i = 0; i < 5; i++) {
+                    const url = 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key) +
+                        (token ? '&pageToken=' + encodeURIComponent(token) : '');
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message || 'API Key সঠিক নয়');
+                    all = all.concat(data.models || []);
+                    token = data.nextPageToken;
+                    if (!token) break;
+                }
+                let names = all
+                    .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+                    .map(m => String(m.name).replace(/^models\//, ''))
+                    .filter(n => /^gemini-/.test(n) && !EXCLUDE_RE.test(n));
+                names = Array.from(new Set(names));
+                names.sort((a, b) => modelRank(b) - modelRank(a) || a.localeCompare(b));
+                if (!names.length) throw new Error('এই Key দিয়ে কোনো উপযুক্ত মডেল পাওয়া যায়নি।');
+
+                let saved = '';
+                try { saved = localStorage.getItem('gemini_model') || ''; } catch (e) { /* ignore */ }
+                const chosen = names.includes(saved) ? saved : pickDefaultModel(names);
+
+                sel.innerHTML = names.map(n => `<option value="${esc(n)}" ${n === chosen ? 'selected' : ''}>${esc(n)}</option>`).join('');
+                info.textContent = `✅ ${bn(names.length)}টি মডেল পাওয়া গেছে। ডিফল্ট: ${chosen}। (Flash মডেল দ্রুত ও বিনামূল্যে কোটায় ভালো)`;
             } catch (err) {
-                alert("JSON পার্স করতে সমস্যা হয়েছে: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "✨ বোর্ড মানের প্রশ্ন তৈরি করুন";
+                info.textContent = '❌ মডেল তালিকা আনা যায়নি: ' + err.message;
+                if (!sel.value) sel.innerHTML = '<option value="">— মডেল পাওয়া যায়নি —</option>';
             }
         }
 
-        function renderQuestionsForReview() {
-            const container = document.getElementById('aiQuestionsList');
-            document.getElementById('reviewContainer').classList.remove('hidden');
-            document.getElementById('genCountBadge').innerText = `${generatedQuestionsData.length}টি প্রশ্ন তৈরি হয়েছে`;
-
-            let html = "";
-            generatedQuestionsData.forEach((qObj, index) => {
-                html += `
-                    <div class="bg-white p-3 rounded-xl border border-amber-200 text-xs space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-800">প্রশ্ন ${index + 1}:</span>
-                            <button onclick="removeQuestion(${index})" class="text-red-500 font-bold hover:underline">ডিলিট</button>
-                        </div>
-                        <textarea onchange="generatedQuestionsData[${index}].q = this.value" class="w-full p-2 border rounded-lg font-semibold text-slate-800" rows="2">${qObj.q}</textarea>
-                        <div class="grid grid-cols-2 gap-2">
-                            ${qObj.options.map((opt, oIdx) => `
-                                <div>
-                                    <label class="text-[10px] text-slate-500">অপশন ${oIdx+1}${qObj.ans === oIdx ? '✅' : ''}</label>
-                                    <input type="text" value="${opt}" onchange="generatedQuestionsData[${index}].options[${oIdx}] = this.value" class="w-full p-1.5 border rounded-lg ${qObj.ans === oIdx ? 'bg-green-50 font-bold border-green-500' : ''}">
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+        // ---------------------------------------------------------------
+        // PDF আপলোড
+        // ---------------------------------------------------------------
+        function handlePdfSelect(input) {
+            const skipped = [];
+            Array.from(input.files || []).forEach(f => {
+                const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+                if (!isPdf) { skipped.push(f.name + ' (PDF নয়)'); return; }
+                if (f.size > MAX_PDF_BYTES) { skipped.push(f.name + ' (৪৫ MB এর বেশি)'); return; }
+                pdfFiles.push({ id: ++pdfCounter, file: f, name: f.name, size: f.size, b64: null });
             });
-            container.innerHTML = html;
+            input.value = '';
+            if (skipped.length) alert('এই ফাইলগুলো যোগ করা হয়নি:\n' + skipped.join('\n'));
+            renderPdfList();
+            renderChapterRows();
+        }
+
+        function removePdf(id) {
+            pdfFiles = pdfFiles.filter(p => p.id !== id);
+            chapterRows.forEach(r => { if (String(r.pdfId) === String(id)) r.pdfId = 'all'; });
+            renderPdfList();
+            renderChapterRows();
+        }
+
+        function renderPdfList() {
+            const el = $('pdfList');
+            if (!pdfFiles.length) {
+                el.innerHTML = '<p class="text-[11px] text-slate-400">এখনো কোনো PDF যোগ করা হয়নি।</p>';
+                return;
+            }
+            el.innerHTML = pdfFiles.map(p => `
+                <div class="flex items-center justify-between bg-white border rounded-lg px-2.5 py-1.5 text-xs">
+                    <span class="truncate mr-2">📄 ${esc(p.name)} <span class="text-slate-400">(${formatSize(p.size)})</span></span>
+                    <button type="button" onclick="removePdf(${p.id})" class="text-red-500 font-bold">✕</button>
+                </div>`).join('');
+        }
+
+        function fileToBase64(entry) {
+            if (entry.b64) return Promise.resolve(entry.b64);
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = String(reader.result || '');
+                    entry.b64 = result.substring(result.indexOf(',') + 1);
+                    resolve(entry.b64);
+                };
+                reader.onerror = () => reject(new Error('ফাইল পড়া যায়নি: ' + entry.name));
+                reader.readAsDataURL(entry.file);
+            });
+        }
+
+        // ---------------------------------------------------------------
+        // অধ্যায় ভিত্তিক সারি
+        // ---------------------------------------------------------------
+        function addChapterRow(vals) {
+            if (chapterRows.length >= 20) return alert('সর্বোচ্চ ২০টি সারি যোগ করা যাবে।');
+            chapterRows.push(Object.assign({ id: ++rowCounter, pdfId: 'all', chapter: '', k: 5, a: 3, p: 2 }, vals || {}));
+            renderChapterRows();
+        }
+
+        function removeRow(id) {
+            chapterRows = chapterRows.filter(r => r.id !== id);
+            renderChapterRows();
+        }
+
+        function updateRow(id, field, value) {
+            const r = chapterRows.find(x => x.id === id);
+            if (!r) return;
+            if (field === 'k' || field === 'a' || field === 'p') {
+                let n = parseInt(value, 10);
+                if (isNaN(n) || n < 0) n = 0;
+                if (n > MAX_PER_ROW) n = MAX_PER_ROW;
+                r[field] = n;
+            } else {
+                r[field] = value;
+            }
+            refreshTotals();
+        }
+
+        function refreshTotals() {
+            let grand = 0;
+            chapterRows.forEach(r => {
+                const t = r.k + r.a + r.p;
+                grand += t;
+                const el = $('rowTotal-' + r.id);
+                if (el) {
+                    el.textContent = bn(t);
+                    el.className = t > MAX_PER_ROW ? 'text-red-600 font-bold' : 'font-bold text-slate-700';
+                }
+            });
+            const g = $('grandTotal');
+            if (g) g.textContent = bn(grand);
+        }
+
+        function renderChapterRows() {
+            const wrap = $('chapterRows');
+            if (!chapterRows.length) {
+                wrap.innerHTML = '<p class="text-[11px] text-slate-400">কোনো সারি নেই। "+ অধ্যায় যোগ করুন" চাপুন।</p>';
+                refreshTotals();
+                return;
+            }
+            wrap.innerHTML = chapterRows.map((r, i) => {
+                const pdfOptions = ['<option value="all">সব PDF থেকে</option>']
+                    .concat(pdfFiles.map(p => `<option value="${p.id}" ${String(r.pdfId) === String(p.id) ? 'selected' : ''}>${esc(p.name)}</option>`))
+                    .join('');
+                return `
+                <div class="bg-white border rounded-xl p-3 space-y-2">
+                    <div class="flex gap-2 items-center">
+                        <span class="text-xs font-bold text-slate-400 w-5">${bn(i + 1)}</span>
+                        <input type="text" value="${esc(r.chapter)}" oninput="updateRow(${r.id}, 'chapter', this.value)"
+                               placeholder="অধ্যায়ের নাম/নম্বর (যেমন: অধ্যায় ৩ – পদার্থের গঠন)" class="flex-1 p-2 border rounded-lg text-xs">
+                        <button type="button" onclick="removeRow(${r.id})" class="text-red-500 text-sm font-bold px-1">✕</button>
+                    </div>
+                    <select onchange="updateRow(${r.id}, 'pdfId', this.value)" class="w-full p-2 border rounded-lg text-xs bg-white">${pdfOptions}</select>
+                    <div class="grid grid-cols-4 gap-2 items-end">
+                        <div><label class="block text-[10px] text-slate-500 mb-0.5">জ্ঞানমূলক</label>
+                            <input type="number" min="0" max="${MAX_PER_ROW}" value="${r.k}" oninput="updateRow(${r.id}, 'k', this.value)" class="w-full p-1.5 border rounded-lg text-xs"></div>
+                        <div><label class="block text-[10px] text-slate-500 mb-0.5">প্রয়োগমূলক</label>
+                            <input type="number" min="0" max="${MAX_PER_ROW}" value="${r.a}" oninput="updateRow(${r.id}, 'a', this.value)" class="w-full p-1.5 border rounded-lg text-xs"></div>
+                        <div><label class="block text-[10px] text-slate-500 mb-0.5">বহুপদী</label>
+                            <input type="number" min="0" max="${MAX_PER_ROW}" value="${r.p}" oninput="updateRow(${r.id}, 'p', this.value)" class="w-full p-1.5 border rounded-lg text-xs"></div>
+                        <div class="text-xs text-slate-500 pb-1.5">মোট: <span id="rowTotal-${r.id}" class="font-bold text-slate-700">${bn(r.k + r.a + r.p)}</span></div>
+                    </div>
+                </div>`;
+            }).join('');
+            refreshTotals();
+        }
+
+        // ---------------------------------------------------------------
+        // AI প্রম্পট ও API কল
+        // ---------------------------------------------------------------
+        const QUESTION_SCHEMA = {
+            type: 'ARRAY',
+            items: {
+                type: 'OBJECT',
+                properties: {
+                    type: { type: 'STRING', enum: ['knowledge', 'application', 'multi'] },
+                    q: { type: 'STRING' },
+                    options: { type: 'ARRAY', items: { type: 'STRING' }, minItems: 4, maxItems: 4 },
+                    ans: { type: 'INTEGER' },
+                    exp: { type: 'STRING' }
+                },
+                required: ['type', 'q', 'options', 'ans', 'exp']
+            }
+        };
+
+        function buildPrompt(row, level, extra) {
+            const levelText = {
+                mixed: 'a mix of easy, medium and hard questions',
+                easy: 'easy (direct from the text)',
+                medium: 'medium',
+                hard: 'hard (needs careful understanding and reasoning)'
+            }[level] || 'a mix of easy, medium and hard questions';
+            const target = row.chapter && row.chapter.trim()
+                ? `Chapter / section: "${row.chapter.trim()}". Use ONLY content that belongs to this chapter or section of the attached PDF(s).`
+                : 'Use the whole content of the attached PDF(s).';
+
+            return `You are an expert question setter for the Bangladesh NCTB SSC (Class 9-10) board examination.
+Write MCQs in Bengali (বাংলা) using ONLY the attached book PDF(s) as your source.
+
+TARGET CONTENT
+${target}
+
+QUESTION COUNTS (generate EXACTLY these numbers)
+- knowledge (জ্ঞানমূলক): ${row.k}
+- application (প্রয়োগমূলক): ${row.a}
+- multi (বহুপদী সমাপ্তিসূচক): ${row.p}
+
+TYPE DEFINITIONS
+1. knowledge: direct recall of a fact, definition, name, formula, law or classification that is stated in the book.
+2. application: the student must apply a concept to a new situation: a short real-life scenario, a small calculation, or reasoning from given data.
+3. multi: a stem followed by three statements labelled i, ii, iii, each on its own line. Format the "q" field exactly like this:
+   <stem sentence>
+   i. <statement>
+   ii. <statement>
+   iii. <statement>
+   নিচের কোনটি সঠিক?
+   The four options must be: "i ও ii", "i ও iii", "ii ও iii", "i, ii ও iii". Make the statements so that exactly one of these options is correct.
+
+RULES
+- Each question has exactly 4 options. Do NOT put labels such as ক/খ/গ/ঘ in the option text.
+- "ans" is the 0-based index of the single correct option (0=ক, 1=খ, 2=গ, 3=ঘ). Spread the correct answers roughly evenly over the four positions.
+- Distractors must be plausible. Avoid options like "none of the above" or "all of the above".
+- No duplicate or overlapping questions. Cover different parts of the target content.
+- Every answer must be verifiable from the PDF. Never invent facts. If the PDF does not contain enough material for the requested counts, return fewer questions instead of making things up.
+- Difficulty: ${levelText}.
+- Plain text only. No LaTeX, no markdown, no HTML tags. Write formulas with Unicode subscripts and superscripts (for example H₂O, CO₂, Al³⁺, SO₄²⁻, x², 10⁻³, √).
+- The question text must not refer to "the book", "the PDF" or page numbers, because students will not see the book.
+- "exp": one or two Bengali sentences explaining why the answer is correct, mentioning the chapter or topic (and the page number if it is visible).
+- "type" must be exactly one of: knowledge, application, multi.
+${extra && extra.trim() ? `\nADDITIONAL INSTRUCTIONS FROM THE ADMIN:\n${extra.trim()}\n` : ''}
+Return only the JSON array.`;
+        }
+
+        function friendlyError(code, msg) {
+            const short = String(msg || '').slice(0, 220);
+            if (code === 404) return 'এই মডেলটি পাওয়া যায়নি বা আপনার Key-র জন্য বন্ধ। তালিকা থেকে অন্য মডেল বেছে নিন। (' + short + ')';
+            if (code === 429) return 'কোটা বা রেট লিমিট শেষ। কিছুক্ষণ পরে আবার চেষ্টা করুন, অথবা ছোট PDF বা লাইট মডেল ব্যবহার করুন। (' + short + ')';
+            if (code === 403) return 'API Key-র অনুমতি নেই বা Key ভুল। (' + short + ')';
+            if (code === 400 && /api key/i.test(short)) return 'API Key সঠিক নয়। (' + short + ')';
+            if (code === 400) return 'অনুরোধ গ্রহণযোগ্য হয়নি: ' + short;
+            if (code === 503) return 'Google-এর সার্ভার এখন ব্যস্ত। (' + short + ')';
+            return 'ত্রুটি (' + code + '): ' + short;
+        }
+
+        function extractText(data) {
+            if (data.promptFeedback && data.promptFeedback.blockReason) {
+                throw new Error('AI কন্টেন্ট ব্লক করেছে: ' + data.promptFeedback.blockReason);
+            }
+            const cand = data.candidates && data.candidates[0];
+            if (!cand) throw new Error('AI কোনো উত্তর দেয়নি।');
+            const parts = (cand.content && cand.content.parts) || [];
+            const text = parts.filter(p => !p.thought && typeof p.text === 'string').map(p => p.text).join('');
+            if (cand.finishReason === 'MAX_TOKENS') {
+                throw new Error('উত্তর অসম্পূর্ণ থেকে গেছে (সীমা শেষ)। এই সারির প্রশ্ন সংখ্যা কমিয়ে ভাগ করে দিন।');
+            }
+            if (!text.trim()) throw new Error('AI-এর উত্তর খালি এসেছে' + (cand.finishReason ? ' (' + cand.finishReason + ')' : '') + '।');
+            return text;
+        }
+
+        async function callGemini(model, apiKey, body, signal) {
+            const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) +
+                ':generateContent?key=' + encodeURIComponent(apiKey);
+            const delays = [5000, 15000];
+            let lastErr;
+            for (let attempt = 0; attempt <= delays.length; attempt++) {
+                if (cancelRequested) throw new Error('বন্ধ করা হয়েছে।');
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                        signal: signal
+                    });
+                    let data = null;
+                    try { data = await res.json(); } catch (_) { /* ignore */ }
+                    if (!res.ok || (data && data.error)) {
+                        const code = (data && data.error && data.error.code) || res.status;
+                        const msg = (data && data.error && data.error.message) || ('HTTP ' + res.status);
+                        const err = new Error(friendlyError(code, msg));
+                        err.retryable = [429, 500, 502, 503, 504].includes(code);
+                        throw err;
+                    }
+                    return extractText(data);
+                } catch (err) {
+                    lastErr = err;
+                    if (err.name === 'AbortError') throw new Error('বন্ধ করা হয়েছে।');
+                    if (err instanceof TypeError) err.retryable = true;   // নেটওয়ার্ক সমস্যা
+                    if (!err.retryable || attempt === delays.length) throw err;
+                    await sleep(delays[attempt]);
+                }
+            }
+            throw lastErr;
+        }
+
+        function normType(t) {
+            const s = String(t || '').toLowerCase();
+            if (s === 'knowledge' || s.indexOf('জ্ঞান') !== -1) return 'knowledge';
+            if (s === 'application' || s.indexOf('প্রয়োগ') !== -1) return 'application';
+            if (s === 'multi' || s.indexOf('বহুপদী') !== -1) return 'multi';
+            return '';
+        }
+
+        function stripLabel(s) {
+            return String(s || '').replace(/^\s*[\(\[]?\s*[কখগঘ]\s*[\)\]\.।:]\s*/, '').trim();
+        }
+
+        function normalizeQuestion(item, row) {
+            if (!item || typeof item !== 'object') return null;
+            const q = String(item.q || '').trim();
+            let options = Array.isArray(item.options) ? item.options.map(stripLabel).filter(o => o) : [];
+            if (!q || options.length !== 4) return null;
+            let ans = item.ans;
+            if (typeof ans === 'string') {
+                const idx = OPT_LABELS.indexOf(ans.trim().charAt(0));
+                ans = idx !== -1 ? idx : parseInt(ans, 10);
+            }
+            ans = Number(ans);
+            if (!Number.isInteger(ans) || ans < 0 || ans > 3) return null;
+            return {
+                type: normType(item.type),
+                chapter: (row.chapter || '').trim(),
+                q: q,
+                options: options,
+                ans: ans,
+                exp: String(item.exp || '').trim()
+            };
+        }
+
+        function parseQuestions(text, row) {
+            let arr;
+            try {
+                arr = JSON.parse(text.trim());
+            } catch (e) {
+                const m = text.replace(/```json|```/g, '').match(/\[[\s\S]*\]/);
+                if (!m) throw new Error('AI-এর উত্তর JSON আকারে পাওয়া যায়নি। আবার চেষ্টা করুন।');
+                try { arr = JSON.parse(m[0]); } catch (e2) { throw new Error('AI-এর উত্তর পড়া যায়নি। আবার চেষ্টা করুন।'); }
+            }
+            if (!Array.isArray(arr)) throw new Error('AI-এর উত্তরের ফরম্যাট ঠিক নেই।');
+            const want = { knowledge: row.k, application: row.a, multi: row.p };
+            const byType = { knowledge: [], application: [], multi: [], other: [] };
+            arr.forEach(item => {
+                const q = normalizeQuestion(item, row);
+                if (!q) return;
+                (byType[q.type] || byType.other).push(q);
+            });
+            let out = [];
+            ['knowledge', 'application', 'multi'].forEach(t => { out = out.concat(byType[t].slice(0, want[t])); });
+            return out.concat(byType.other);
+        }
+
+        async function generateForRow(row, ctx) {
+            const selected = String(row.pdfId) === 'all' ? pdfFiles : pdfFiles.filter(p => String(p.id) === String(row.pdfId));
+            const use = selected.length ? selected : pdfFiles;
+            const approxBytes = use.reduce((s, p) => s + p.size, 0) * 1.37;
+            if (approxBytes > MAX_REQUEST_BYTES) {
+                throw new Error('এই সারির PDF-গুলোর মোট সাইজ অনেক বেশি। সারিতে নির্দিষ্ট একটি PDF বেছে নিন।');
+            }
+            const parts = [];
+            for (const p of use) {
+                const b64 = await fileToBase64(p);
+                parts.push({ inlineData: { mimeType: 'application/pdf', data: b64 } });
+            }
+            parts.push({ text: buildPrompt(row, ctx.level, ctx.extra) });
+            const body = {
+                contents: [{ role: 'user', parts: parts }],
+                generationConfig: {
+                    maxOutputTokens: 24576,
+                    responseMimeType: 'application/json',
+                    responseSchema: QUESTION_SCHEMA
+                }
+            };
+            currentAbort = new AbortController();
+            const text = await callGemini(ctx.model, ctx.apiKey, body, currentAbort.signal);
+            return parseQuestions(text, row);
+        }
+
+        function renderProgress() {
+            const el = $('genProgress');
+            el.classList.remove('hidden');
+            el.innerHTML = progress.map(p => `
+                <div class="flex justify-between gap-3">
+                    <span class="text-slate-700">${esc(p.label)}</span>
+                    <span class="${p.cls} text-right">${esc(p.text)}</span>
+                </div>`).join('');
+        }
+
+        function setBusy(on) {
+            isGenerating = on;
+            const btn = $('btnGenerate');
+            btn.disabled = on;
+            btn.innerText = on ? '⏳ AI প্রশ্ন তৈরি করছে...' : '✨ বোর্ড মানের প্রশ্ন তৈরি করুন';
+            $('btnCancel').classList.toggle('hidden', !on);
+        }
+
+        function cancelGeneration() {
+            cancelRequested = true;
+            if (currentAbort) currentAbort.abort();
+        }
+
+        async function generateAiQuestions(e) {
+            e.preventDefault();
+            if (isGenerating) return;
+
+            const apiKey = $('geminiApiKey').value.trim();
+            const model = $('modelSelect').value;
+            if (!apiKey) return alert('অনুগ্রহ করে Gemini API Key বসান!');
+            if (!model) return alert('একটি মডেল বেছে নিন। "মডেল লোড" বাটন চাপুন।');
+            if (!pdfFiles.length) return alert('কমপক্ষে একটি বইয়ের PDF আপলোড করুন।');
+
+            const rows = chapterRows.filter(r => r.k + r.a + r.p > 0);
+            if (!rows.length) return alert('কমপক্ষে একটি সারিতে প্রশ্ন সংখ্যা দিন।');
+            const tooMany = rows.find(r => r.k + r.a + r.p > MAX_PER_ROW);
+            if (tooMany) return alert('একটি সারিতে সর্বোচ্চ ' + bn(MAX_PER_ROW) + 'টি প্রশ্ন হতে পারে। বেশি হলে অধ্যায়টি দুই সারিতে ভাগ করুন।');
+            if (generatedQuestionsData.length && !confirm('রিভিউ তালিকায় আগের ' + bn(generatedQuestionsData.length) + 'টি প্রশ্ন আছে। নতুন জেনারেট করলে সেগুলো মুছে যাবে। চালিয়ে যাবেন?')) return;
+
+            persistApiKey();
+            try { localStorage.setItem('gemini_model', model); } catch (err) { /* ignore */ }
+
+            const ctx = { apiKey: apiKey, model: model, level: $('levelSelect').value, extra: $('extraInstructions').value };
+            cancelRequested = false;
+            setBusy(true);
+            progress = rows.map((r, i) => ({
+                label: (i + 1 > 0 ? bn(i + 1) + '. ' : '') + (r.chapter.trim() || 'সব অধ্যায়'),
+                text: 'অপেক্ষায়...', cls: 'text-slate-400'
+            }));
+            renderProgress();
+
+            let collected = [];
+            for (let i = 0; i < rows.length; i++) {
+                if (cancelRequested) { progress[i].text = 'বাদ দেওয়া হয়েছে'; progress[i].cls = 'text-slate-400'; continue; }
+                const row = rows[i];
+                progress[i].text = '⏳ তৈরি হচ্ছে...';
+                progress[i].cls = 'text-blue-600';
+                renderProgress();
+                try {
+                    const qs = await generateForRow(row, ctx);
+                    collected = collected.concat(qs);
+                    const c = { knowledge: 0, application: 0, multi: 0 };
+                    qs.forEach(q => { if (c[q.type] !== undefined) c[q.type]++; });
+                    const wantTotal = row.k + row.a + row.p;
+                    const detail = `জ্ঞান ${bn(c.knowledge)}, প্রয়োগ ${bn(c.application)}, বহুপদী ${bn(c.multi)}`;
+                    if (qs.length === wantTotal && c.knowledge === row.k && c.application === row.a && c.multi === row.p) {
+                        progress[i].text = `✅ ${bn(qs.length)}টি (${detail})`;
+                        progress[i].cls = 'text-green-600';
+                    } else {
+                        progress[i].text = `⚠️ ${bn(qs.length)}/${bn(wantTotal)}টি (${detail})`;
+                        progress[i].cls = 'text-amber-600';
+                    }
+                } catch (err) {
+                    progress[i].text = '❌ ' + err.message;
+                    progress[i].cls = 'text-red-600';
+                }
+                renderProgress();
+            }
+
+            // একই প্রশ্ন একাধিকবার এলে বাদ
+            const seen = new Set();
+            collected = collected.filter(q => {
+                const k = q.q.replace(/\s+/g, '');
+                if (seen.has(k)) return false;
+                seen.add(k);
+                return true;
+            });
+
+            setBusy(false);
+            currentAbort = null;
+
+            if (!collected.length) {
+                alert('কোনো প্রশ্ন তৈরি হয়নি। উপরের অবস্থা তালিকায় কারণ দেখুন।');
+                return;
+            }
+            generatedQuestionsData = collected;
+            $('reviewNote').classList.add('hidden');
+            renderQuestionsForReview();
+            $('reviewContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ---------------------------------------------------------------
+        // রিভিউ ও এডিট
+        // ---------------------------------------------------------------
+        function updateQ(i, field, value) {
+            if (!generatedQuestionsData[i]) return;
+            generatedQuestionsData[i][field] = field === 'ans' ? Number(value) : value;
+        }
+
+        function updateOpt(i, o, value) {
+            if (generatedQuestionsData[i]) generatedQuestionsData[i].options[o] = value;
         }
 
         function removeQuestion(index) {
@@ -297,46 +801,160 @@ Format:
             renderQuestionsForReview();
         }
 
-        async function saveApprovedQuestions() {
-            if(generatedQuestionsData.length === 0) return alert("কোনো প্রশ্ন নেই!");
+        function renderQuestionsForReview() {
+            const container = $('aiQuestionsList');
+            const box = $('reviewContainer');
+            if (!generatedQuestionsData.length) {
+                box.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+            box.classList.remove('hidden');
 
-            const subjectTitle = document.getElementById('subjectTitle').value.trim();
-            const timeLimit = parseInt(document.getElementById('timeLimit').value) || 25;
-            const marksPerQ = parseFloat(document.getElementById('marksPerQ').value) || 1;
+            const counts = { knowledge: 0, application: 0, multi: 0 };
+            generatedQuestionsData.forEach(q => { if (counts[q.type] !== undefined) counts[q.type]++; });
+            $('genCountBadge').innerText = `মোট ${bn(generatedQuestionsData.length)}টি · জ্ঞান ${bn(counts.knowledge)} · প্রয়োগ ${bn(counts.application)} · বহুপদী ${bn(counts.multi)}`;
 
-            const docId = subjectTitle.replace(/\s+/g, '_');
-            await db.collection('exams').doc(docId).set({
-                setNo: Date.now().toString().slice(-4),
-                title: subjectTitle,
-                timeLimit: timeLimit,
-                marksPerQ: marksPerQ,
-                questions: generatedQuestionsData,
-                updatedAt: new Date()
-            });
-
-            alert(`"${subjectTitle}" বিষয়ের পরীক্ষাটি সফলভাবে ফায়ারবেসে সেভ করা হয়েছে!`);
-            document.getElementById('reviewContainer').classList.add('hidden');
-            loadExams();
+            container.innerHTML = generatedQuestionsData.map((qObj, index) => {
+                const badge = qObj.type ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${TYPE_BADGE[qObj.type]}">${TYPE_LABEL[qObj.type]}</span>` : '';
+                const chapter = qObj.chapter ? `<span class="text-[10px] text-slate-500">${esc(qObj.chapter)}</span>` : '';
+                const opts = [0, 1, 2, 3].map(o => `
+                    <div class="flex items-center gap-1.5 ${qObj.ans === o ? 'bg-green-50 border-green-400' : 'border-transparent'} border rounded-lg px-1.5 py-1">
+                        <input type="radio" name="ans-${index}" ${qObj.ans === o ? 'checked' : ''} onchange="updateQ(${index}, 'ans', ${o}); renderQuestionsForReview();" title="সঠিক উত্তর">
+                        <span class="text-slate-500 font-bold">${OPT_LABELS[o]}.</span>
+                        <input type="text" value="${esc(qObj.options[o])}" oninput="updateOpt(${index}, ${o}, this.value)" class="flex-1 min-w-0 p-1 border rounded-md text-xs">
+                    </div>`).join('');
+                return `
+                <div class="bg-white p-3 rounded-xl border border-amber-200 text-xs space-y-2">
+                    <div class="flex justify-between items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-slate-800">প্রশ্ন ${bn(index + 1)}</span> ${badge} ${chapter}
+                        </div>
+                        <button type="button" onclick="removeQuestion(${index})" class="text-red-500 font-bold hover:underline shrink-0">ডিলিট</button>
+                    </div>
+                    <textarea oninput="updateQ(${index}, 'q', this.value)" class="w-full p-2 border rounded-lg font-semibold text-slate-800" rows="${qObj.type === 'multi' ? 6 : 3}">${esc(qObj.q)}</textarea>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${opts}</div>
+                    <textarea oninput="updateQ(${index}, 'exp', this.value)" rows="2" placeholder="ব্যাখ্যা / বইয়ের রেফারেন্স" class="w-full p-2 border rounded-lg text-[11px] text-slate-600 bg-slate-50">${esc(qObj.exp)}</textarea>
+                </div>`;
+            }).join('');
         }
 
+        // ---------------------------------------------------------------
+        // সেভ / পাবলিশ
+        // ---------------------------------------------------------------
+        function toStored(q) {
+            return {
+                q: String(q.q).trim(),
+                options: q.options.map((o, i) => OPT_LABELS[i] + '. ' + String(o).trim()),
+                ans: q.ans,
+                type: q.type || '',
+                chapter: q.chapter || '',
+                exp: String(q.exp || '').trim()
+            };
+        }
+
+        function fromStored(q) {
+            return {
+                type: q.type || '',
+                chapter: q.chapter || '',
+                q: q.q || '',
+                options: (q.options || []).map(stripLabel),
+                ans: Number.isInteger(q.ans) ? q.ans : 0,
+                exp: q.exp || ''
+            };
+        }
+
+        function makeDocId(title) {
+            return title.trim().replace(/[\/\\?#\[\]]/g, '-').replace(/\s+/g, '_');
+        }
+
+        async function saveQuestions(publish) {
+            if (!generatedQuestionsData.length) return alert("কোনো প্রশ্ন নেই!");
+
+            const title = $('subjectTitle').value.trim();
+            if (!title) return alert('"পরীক্ষার বিষয়ের নাম" ঘরটি পূরণ করুন (যেমন: রসায়ন)।');
+
+            // প্রতিটি প্রশ্ন যাচাই
+            const problems = [];
+            generatedQuestionsData.forEach((q, i) => {
+                if (!String(q.q).trim()) problems.push(`প্রশ্ন ${bn(i + 1)}: প্রশ্ন খালি`);
+                else if (q.options.length !== 4 || q.options.some(o => !String(o).trim())) problems.push(`প্রশ্ন ${bn(i + 1)}: অপশন খালি`);
+                else if (!Number.isInteger(q.ans) || q.ans < 0 || q.ans > 3) problems.push(`প্রশ্ন ${bn(i + 1)}: সঠিক উত্তর বাছা হয়নি`);
+            });
+            if (problems.length) return alert('এই সমস্যাগুলো ঠিক করুন:\n' + problems.slice(0, 10).join('\n'));
+
+            const timeLimit = parseInt($('timeLimit').value, 10) || 25;
+            const marksPerQ = parseFloat($('marksPerQ').value) || 1;
+            const docId = makeDocId(title);
+            const mode = (document.querySelector('input[name="saveMode"]:checked') || {}).value || 'append';
+
+            try {
+                const snap = await db.collection('exams').doc(docId).get();
+                const existing = snap.exists ? snap.data() : null;
+
+                if (existing && existing.published !== false && !publish) {
+                    if (!confirm(`"${title}" এখন পাবলিশড আছে। ড্রাফট সেভ করলে শিক্ষার্থীদের কাছ থেকে এটি লুকিয়ে যাবে। চালিয়ে যাবেন?`)) return;
+                }
+
+                const newQs = generatedQuestionsData.map(toStored);
+                let finalQs = newQs;
+                if (mode === 'append' && existing && Array.isArray(existing.questions)) {
+                    finalQs = existing.questions.concat(newQs);
+                }
+
+                const payload = {
+                    setNo: existing && existing.setNo ? existing.setNo : Date.now().toString().slice(-4),
+                    title: title,
+                    timeLimit: timeLimit,
+                    marksPerQ: marksPerQ,
+                    questions: finalQs,
+                    published: !!publish,
+                    updatedAt: new Date()
+                };
+                if (JSON.stringify(payload).length > 900000) {
+                    return alert('প্রশ্ন সংখ্যা অনেক বেশি হয়ে গেছে (ডাটাবেজের সীমা)। বিষয়টি দুই ভাগে ভাগ করে সেভ করুন।');
+                }
+
+                await db.collection('exams').doc(docId).set(payload);
+                alert(`"${title}" বিষয়ে এখন মোট ${bn(finalQs.length)}টি প্রশ্ন আছে। ${publish ? 'শিক্ষার্থীদের জন্য পাবলিশ করা হয়েছে!' : 'ড্রাফট হিসেবে সেভ হয়েছে।'}`);
+                generatedQuestionsData = [];
+                $('reviewNote').classList.add('hidden');
+                renderQuestionsForReview();
+                loadExams();
+            } catch (err) {
+                alert('সেভ করতে সমস্যা হয়েছে: ' + err.message);
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // সেভ থাকা বিষয়ের তালিকা
+        // ---------------------------------------------------------------
         function loadExams() {
-            const list = document.getElementById('examList');
+            const list = $('examList');
             db.collection('exams').get().then(snapshot => {
-                if(snapshot.empty) {
-                    list.innerHTML = "<p class='text-xs text-slate-400'>ডাটাবেজে কোনো বিষয় সেভ নেই।</p>";
+                if (snapshot.empty) {
+                    list.innerHTML = "<p class='text-xs text-slate-400'>ডাটাবেজে কোনো বিষয় সেভ নেই।</p>";
                     return;
                 }
                 let html = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const qCount = data.questions ? data.questions.length : 0;
+                    const isPub = data.published !== false;
                     html += `
-                        <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
-                            <div>
-                                <span class="font-bold text-slate-800 text-sm">${data.title}</span>
-                                <p class="text-slate-500 mt-0.5">সময়: ${data.timeLimit} মিনিট | প্রশ্ন: ${qCount} টি | নম্বর/প্রশ্ন: ${data.marksPerQ}</p>
+                        <div class="p-3 bg-slate-50 border rounded-xl text-xs space-y-2">
+                            <div class="flex justify-between items-start gap-2">
+                                <div>
+                                    <span class="font-bold text-slate-800 text-sm">${esc(data.title)}</span>
+                                    <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isPub ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}">${isPub ? 'পাবলিশড' : 'ড্রাফট'}</span>
+                                    <p class="text-slate-500 mt-0.5">সময়: ${esc(data.timeLimit)} মিনিট | প্রশ্ন: ${bn(qCount)} টি | নম্বর/প্রশ্ন: ${esc(data.marksPerQ)}</p>
+                                </div>
                             </div>
-                            <button onclick="deleteExam('${doc.id}')" class="text-red-500 hover:underline font-bold">মুছে ফেলুন</button>
+                            <div class="flex flex-wrap gap-3 font-bold">
+                                <button onclick="togglePublish('${esc(doc.id)}', ${isPub})" class="text-blue-600 hover:underline">${isPub ? 'আনপাবলিশ করুন' : 'পাবলিশ করুন'}</button>
+                                <button onclick="editExam('${esc(doc.id)}')" class="text-amber-600 hover:underline">প্রশ্ন দেখুন/এডিট করুন</button>
+                                <button onclick="deleteExam('${esc(doc.id)}')" class="text-red-500 hover:underline">মুছে ফেলুন</button>
+                            </div>
                         </div>
                     `;
                 });
@@ -344,11 +962,41 @@ Format:
             });
         }
 
+        function togglePublish(id, currentlyPublished) {
+            db.collection('exams').doc(id).update({ published: !currentlyPublished }).then(() => loadExams());
+        }
+
+        async function editExam(id) {
+            if (generatedQuestionsData.length && !confirm('রিভিউ তালিকায় থাকা প্রশ্নগুলো মুছে এই বিষয়ের প্রশ্ন খোলা হবে। চালিয়ে যাবেন?')) return;
+            try {
+                const snap = await db.collection('exams').doc(id).get();
+                if (!snap.exists) return alert('বিষয়টি পাওয়া যায়নি।');
+                const data = snap.data();
+                $('subjectTitle').value = data.title || '';
+                $('timeLimit').value = data.timeLimit || 25;
+                $('marksPerQ').value = data.marksPerQ || 1;
+                generatedQuestionsData = (data.questions || []).map(fromStored);
+                const replaceRadio = document.querySelector('input[name="saveMode"][value="replace"]');
+                if (replaceRadio) replaceRadio.checked = true;
+                const note = $('reviewNote');
+                note.textContent = `"${data.title}" এর বিদ্যমান ${bn(generatedQuestionsData.length)}টি প্রশ্ন এডিট করছেন। সেভ করলে এগুলোই পুরনোগুলোর জায়গায় বসবে।`;
+                note.classList.remove('hidden');
+                renderQuestionsForReview();
+                $('reviewContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (err) {
+                alert('লোড করতে সমস্যা: ' + err.message);
+            }
+        }
+
         function deleteExam(id) {
-            if(confirm("আপনি কি এই বিষয়টি মুছে ফেলতে চান?")) {
+            if (confirm("আপনি কি এই বিষয়টি মুছে ফেলতে চান?")) {
                 db.collection('exams').doc(id).delete().then(() => loadExams());
             }
         }
+
+        // শুরুর অবস্থা
+        renderPdfList();
+        addChapterRow();
     </script>
 </body>
 </html>
