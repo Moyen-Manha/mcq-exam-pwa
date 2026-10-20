@@ -1,16 +1,33 @@
 {
   "name": "ExamPrep AI - MCQ Exam",
   "short_name": "ExamPrep",
-  "start_url": "/index.html",
+  "description": "SSC-27 মডেল টেস্ট MCQ পরীক্ষা",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#2563eb",
   "orientation": "portrait",
+  "lang": "bn",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
