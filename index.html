@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamPrep SSC-27 - শিক্ষার্থী পোর্টাল</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ExamPrep">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
@@ -52,13 +60,13 @@
         <div id="examDashboard" class="hidden space-y-4">
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                 <h2 id="welcomeText" class="font-bold text-slate-900 text-lg">মডেল টেস্ট - ২০২৭</h2>
-                <p class="text-xs text-emerald-600 font-bold mt-1">অংশগ্রহণের জন্য বিষয়গুলো বেছে নিন:</p>
+                <p class="text-xs text-emerald-600 font-bold mt-1">অংশগ্রহণের জন্য বিষয়গুলো বেছে নিন:</p>
             </div>
 
             <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
-                <p class="text-xs font-bold text-emerald-900 border-b border-emerald-100 pb-2">যেকোনো ৩টি বিষয় বেছে নিন:</p>
+                <p class="text-xs font-bold text-emerald-900 border-b border-emerald-100 pb-2">যেকোনো ৩টি বিষয় বেছে নিন:</p>
                 <div id="subjectCheckboxContainer" class="space-y-2.5">
-                    <p class="text-xs text-slate-400">বিষয় লোড হচ্ছে...</p>
+                    <p class="text-xs text-slate-400">বিষয় লোড হচ্ছে...</p>
                 </div>
             </div>
 
@@ -105,7 +113,7 @@
             appId: "1:232482881612:web:dc976b8f66e03c2480b4e9",
             measurementId: "G-5W6KJQZWW8"
         };
-        
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -128,7 +136,7 @@
                 trxId: document.getElementById('trxId').value.trim(),
                 status: 'pending'
             });
-            alert("পেমেন্ট জমা হয়েছে!");
+            alert("পেমেন্ট জমা হয়েছে!");
             switchTab('login');
         }
 
@@ -136,8 +144,8 @@
             e.preventDefault();
             const phone = document.getElementById('loginPhone').value.trim();
             const docRef = await db.collection('students').doc(phone).get();
-            
-            if(!docRef.exists) return alert("আবেদন পাওয়া যায়নি!");
+
+            if(!docRef.exists) return alert("আবেদন পাওয়া যায়নি!");
             const data = docRef.data();
 
             if(data.status === 'approved') {
@@ -146,7 +154,7 @@
                 document.getElementById('examDashboard').classList.remove('hidden');
                 loadSubjectCheckboxes();
             } else {
-                alert("আপনার পেমেন্ট অপেক্ষমাণ (Pending) বা বাতিল করা হয়েছে।");
+                alert("আপনার পেমেন্ট অপেক্ষমাণ (Pending) বা বাতিল করা হয়েছে।");
             }
         }
 
@@ -169,7 +177,7 @@
                         </label>
                     `;
                 });
-                container.innerHTML = html || "<p class='text-xs text-slate-400'>কোনো বিষয় নেই।</p>";
+                container.innerHTML = html || "<p class='text-xs text-slate-400'>কোনো বিষয় নেই।</p>";
             });
         }
 
@@ -188,7 +196,7 @@
 
         function startMultiExam() {
             const checkboxes = document.querySelectorAll('.subject-checkbox:checked');
-            if(checkboxes.length === 0) return alert("কমপক্ষে একটি বিষয় বেছে নিন!");
+            if(checkboxes.length === 0) return alert("কমপক্ষে একটি বিষয় বেছে নিন!");
 
             currentQuestions = [];
             totalSeconds = 0;
@@ -201,7 +209,7 @@
                 }
             });
 
-            if(currentQuestions.length === 0) return alert("সিলেক্ট করা বিষয়ে প্রশ্ন নেই!");
+            if(currentQuestions.length === 0) return alert("সিলেক্ট করা বিষয়ে প্রশ্ন নেই!");
 
             // Shuffle questions for each student dynamically
             currentQuestions = shuffleArray(currentQuestions);
@@ -223,7 +231,7 @@
                 document.getElementById('timerText').innerText = `⏱️ ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                 if(totalSeconds <= 0) {
                     clearInterval(timerInterval);
-                    alert("সময় শেষ!");
+                    alert("সময় শেষ!");
                     showResult();
                 }
             }, 1000);
@@ -232,7 +240,7 @@
         function renderQuestion() {
             const q = currentQuestions[currentQIndex];
             document.getElementById('questionCount').innerText = `প্রশ্ন ${currentQIndex + 1}/${currentQuestions.length}`;
-            
+
             let html = `<h3 class="font-bold text-slate-800 mb-3 text-xs leading-relaxed">${q.q}</h3><div class="space-y-2">`;
             q.options.forEach((opt, idx) => {
                 html += `<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
@@ -256,6 +264,15 @@
             document.getElementById('mcqScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
             document.getElementById('scoreText').innerText = `${obtainedScore}/${currentQuestions.length}`;
+        }
+    </script>
+
+    <!-- PWA: Service Worker রেজিস্ট্রেশন -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
         }
     </script>
 </body>
