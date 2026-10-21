@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>ExamPrep SSC-27 - AI এডমিন প্যানেল</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen p-4">
@@ -16,13 +18,16 @@
     <div class="max-w-3xl mx-auto bg-white rounded-2xl p-6 shadow-md space-y-8">
         <div class="flex justify-between items-center border-b pb-4">
             <h1 class="text-2xl font-bold text-slate-800">ExamPrep AI এডমিন প্যানেল (SSC 2027)</h1>
+            <button id="btnLogout" onclick="logoutAdmin()" class="hidden text-xs text-red-600 font-bold">লগআউট</button>
         </div>
 
-        <!-- PIN Protection -->
-        <div id="pinBox" class="space-y-3">
-            <p class="text-sm text-slate-600">এডমিন পেজে ঢুকতে গোপন পিন লিখুন:</p>
-            <input type="password" id="adminPin" placeholder="পিন লিখুন (Default: 1234)" class="w-full p-2.5 border rounded-xl text-sm">
-            <button onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl font-bold">প্রবেশ করুন</button>
+        <!-- Admin Login -->
+        <div id="loginBox" class="space-y-3">
+            <p class="text-sm text-slate-600">এডমিন ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন:</p>
+            <input type="email" id="adminEmail" autocomplete="username" placeholder="ইমেইল" class="w-full p-2.5 border rounded-xl text-sm">
+            <input type="password" id="adminPass" autocomplete="current-password" placeholder="পাসওয়ার্ড" class="w-full p-2.5 border rounded-xl text-sm"
+                   onkeydown="if(event.key==='Enter') loginAdmin()">
+            <button id="btnLogin" onclick="loginAdmin()" class="bg-blue-600 text-white text-sm px-4 py-2 rounded-xl font-bold">প্রবেশ করুন</button>
         </div>
 
         <!-- Dashboard -->
@@ -32,12 +37,13 @@
                 <button onclick="switchAdminTab('aiGenerator')" id="tabAiBtn" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-600">✨ AI প্রশ্ন জেনারেটর</button>
             </div>
 
-            <!-- Tab 1: Students -->
+            <!-- Tab 1: Payments -->
             <div id="tabStudentsSection" class="space-y-4">
                 <div class="flex justify-between items-center">
-                    <h2 class="font-bold text-slate-700">আবেদনকারীদের তালিকা</h2>
-                    <button onclick="loadStudents()" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg font-bold">রিফ্রেশ করুন</button>
+                    <h2 class="font-bold text-slate-700">পেমেন্ট ও TrxID তালিকা</h2>
+                    <button onclick="loadPayments()" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg font-bold">রিফ্রেশ করুন</button>
                 </div>
+                <p class="text-[11px] text-slate-500">প্রতিটি TrxID দিয়ে একবারই পরীক্ষা দেওয়া যায়। কেউ ভুল/নকল TrxID জমা দিয়ে আটকে রাখলে "মুছুন" চেপে আসল শিক্ষার্থীকে আবার জমা দিতে বলুন।</p>
                 <div id="studentList" class="space-y-3"><p class="text-xs text-slate-400">লোডিং...</p></div>
             </div>
 
@@ -47,12 +53,11 @@
 
                 <form id="genForm" onsubmit="generateAiQuestions(event)" class="space-y-5">
 
-                    <!-- ১. API Key ও মডেল -->
                     <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
                         <h3 class="text-xs font-bold text-slate-800">১. Gemini API Key ও মডেল</h3>
-                        <input type="password" id="geminiApiKey" onchange="persistApiKey(); loadModels()" placeholder="Gemini API Key বসান (যেমন: AIzaSy...)" class="w-full p-2.5 border rounded-xl text-sm bg-white font-mono">
+                        <input type="password" id="geminiApiKey" autocomplete="off" onchange="persistApiKey(); loadModels()" placeholder="Gemini API Key বসান (যেমন: AIzaSy...)" class="w-full p-2.5 border rounded-xl text-sm bg-white font-mono">
                         <label class="flex items-center gap-2 text-[11px] text-slate-600">
-                            <input type="checkbox" id="rememberKey" onchange="persistApiKey()"> এই ডিভাইসে Key মনে রাখুন (শুধু নিজের কম্পিউটারে টিক দিন)
+                            <input type="checkbox" id="rememberKey" onchange="persistApiKey()"> এই ট্যাব খোলা থাকা পর্যন্ত Key মনে রাখুন (ট্যাব বন্ধ করলে মুছে যাবে)
                         </label>
                         <div class="flex gap-2">
                             <select id="modelSelect" class="flex-1 p-2.5 border rounded-xl text-sm bg-white">
@@ -60,10 +65,9 @@
                             </select>
                             <button type="button" onclick="loadModels()" class="bg-slate-200 text-slate-700 text-xs px-3 rounded-xl font-bold">মডেল লোড</button>
                         </div>
-                        <p id="modelInfo" class="text-[11px] text-slate-500">aistudio.google.com থেকে বিনামূল্যে API Key নিতে পারেন। মডেল তালিকা সরাসরি Google থেকে আসে, তাই নাম বদলালেও সমস্যা হবে না।</p>
+                        <p id="modelInfo" class="text-[11px] text-slate-500">aistudio.google.com থেকে বিনামূল্যে API Key নিতে পারেন। মডেল তালিকা সরাসরি Google থেকে আসে।</p>
                     </div>
 
-                    <!-- ২. বিষয় ও সেটিংস -->
                     <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
                         <h3 class="text-xs font-bold text-slate-800">২. বিষয় ও পরীক্ষার সেটিংস</h3>
                         <div>
@@ -91,7 +95,6 @@
                         </div>
                     </div>
 
-                    <!-- ৩. PDF আপলোড -->
                     <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
                         <h3 class="text-xs font-bold text-slate-800">৩. বইয়ের PDF আপলোড</h3>
                         <input type="file" id="pdfInput" accept="application/pdf,.pdf" multiple onchange="handlePdfSelect(this)"
@@ -100,7 +103,6 @@
                         <p class="text-[11px] text-slate-500">* প্রতিটি PDF সর্বোচ্চ ৪৫ MB। অধ্যায় ভিত্তিক আলাদা ছোট PDF দিলে দ্রুত হয় ও টোকেন কম লাগে। ফাইল শুধু Google AI-তে পাঠানো হয়, কোথাও সেভ হয় না।</p>
                     </div>
 
-                    <!-- ৪. অধ্যায় ভিত্তিক নির্দেশনা -->
                     <div class="bg-slate-50 p-4 rounded-xl border space-y-3">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xs font-bold text-slate-800">৪. কোন অধ্যায় থেকে কত প্রশ্ন</h3>
@@ -110,7 +112,6 @@
                         <p class="text-xs text-slate-700 font-bold">সর্বমোট প্রশ্ন: <span id="grandTotal">০</span>টি <span class="text-[11px] text-slate-400 font-normal">(একটি সারিতে সর্বোচ্চ ৩০টি)</span></p>
                     </div>
 
-                    <!-- ৫. অতিরিক্ত নির্দেশনা -->
                     <div class="bg-slate-50 p-4 rounded-xl border space-y-2">
                         <h3 class="text-xs font-bold text-slate-800">৫. অতিরিক্ত নির্দেশনা (ঐচ্ছিক)</h3>
                         <textarea id="extraInstructions" rows="2" placeholder="যেমন: সংখ্যাসূচক প্রশ্নে সূত্র ব্যবহার করুন; পরীক্ষণ অংশ থেকে প্রশ্ন করবেন না..." class="w-full p-2.5 border rounded-xl text-sm bg-white"></textarea>
@@ -126,7 +127,6 @@
                     <div id="genProgress" class="hidden space-y-1.5 bg-slate-50 border rounded-xl p-3 text-xs"></div>
                 </form>
 
-                <!-- Review Container -->
                 <div id="reviewContainer" class="hidden space-y-4 bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <div class="flex justify-between items-center border-b border-amber-200 pb-2">
                         <h3 class="font-bold text-amber-900 text-sm">AI জেনারেটেড প্রশ্ন (রিভিউ ও এডিট করুন)</h3>
@@ -169,8 +169,12 @@
             measurementId: "G-5W6KJQZWW8"
         };
 
+        // !!! এখানে আপনার অ্যাডমিন ইমেইল লিখুন (Firestore রুলসের ইমেইলের সাথে হুবহু মিলতে হবে) !!!
+        const ADMIN_EMAIL = 'thoha.deep@gmail.com';
+
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         // ---------------------------------------------------------------
         // সাধারণ হেল্পার
@@ -198,72 +202,140 @@
         const MAX_REQUEST_BYTES = 95 * 1024 * 1024;
         const MAX_PER_ROW = 30;
 
-        let generatedQuestionsData = [];   // রিভিউ তালিকা (options এ ক/খ/গ/ঘ লেবেল ছাড়া)
-        let pdfFiles = [];                 // {id, file, name, size, b64}
-        let chapterRows = [];              // {id, pdfId, chapter, k, a, p}
+        let generatedQuestionsData = [];
+        let pdfFiles = [];
+        let chapterRows = [];
         let pdfCounter = 0, rowCounter = 0;
         let isGenerating = false, cancelRequested = false, currentAbort = null;
         let progress = [];
 
         // ---------------------------------------------------------------
-        // লগইন ও ট্যাব
+        // অ্যাডমিন লগইন (Firebase Authentication)
         // ---------------------------------------------------------------
-        function loginAdmin() {
-            const pin = $('adminPin').value;
-            if (pin === '1234') {
-                $('pinBox').classList.add('hidden');
-                $('adminContent').classList.remove('hidden');
-                loadStudents();
-                loadExams();
-                initApiKey();
-            } else { alert("ভুল পিন!"); }
-        }
+        let failCount = 0, lockUntil = 0, adminLoaded = false, idleTimer = null;
 
-        function switchAdminTab(type) {
-            if (type === 'students') {
-                $('tabStudentsSection').classList.remove('hidden');
-                $('tabAiSection').classList.add('hidden');
-                $('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
-                $('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
-            } else {
-                $('tabStudentsSection').classList.add('hidden');
-                $('tabAiSection').classList.remove('hidden');
-                $('tabAiBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-blue-600 shadow";
-                $('tabStudentsBtn').className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-600";
+        async function loginAdmin() {
+            const email = $('adminEmail').value.trim();
+            const pass = $('adminPass').value;
+            if (!email || !pass) return alert('ইমেইল ও পাসওয়ার্ড দিন।');
+            if (Date.now() < lockUntil) return alert('অনেকবার ভুল হয়েছে। ১ মিনিট পর আবার চেষ্টা করুন।');
+
+            $('btnLogin').disabled = true;
+            try {
+                // ট্যাব বন্ধ করলেই লগআউট হয়ে যাবে
+                await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+                await auth.signInWithEmailAndPassword(email, pass);
+                failCount = 0;
+            } catch (err) {
+                failCount++;
+                if (failCount >= 5) { lockUntil = Date.now() + 60000; failCount = 0; }
+                alert('লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড ভুল, অথবা অনেকবার চেষ্টা করা হয়েছে।');
+            } finally {
+                $('adminPass').value = '';
+                $('btnLogin').disabled = false;
             }
         }
 
+        function logoutAdmin() { auth.signOut(); }
+
+        function resetIdle() {
+            clearTimeout(idleTimer);
+            if (!adminLoaded) return;
+            idleTimer = setTimeout(() => { alert('৩০ মিনিট নিষ্ক্রিয় থাকায় লগআউট করা হয়েছে।'); auth.signOut(); }, 30 * 60 * 1000);
+        }
+        ['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
+
+        function showAdmin(on) {
+            $('loginBox').classList.toggle('hidden', on);
+            $('adminContent').classList.toggle('hidden', !on);
+            $('btnLogout').classList.toggle('hidden', !on);
+        }
+
+        auth.onAuthStateChanged(user => {
+            const isAdmin = user && !user.isAnonymous && user.email &&
+                user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+            if (isAdmin) {
+                showAdmin(true);
+                if (!adminLoaded) {
+                    adminLoaded = true;
+                    loadPayments();
+                    loadExams();
+                    initApiKey();
+                }
+                resetIdle();
+            } else {
+                // অন্য কোনো ইমেইল দিয়ে লগইন হলে সাথে সাথে বের করে দেওয়া হয়
+                if (user && !user.isAnonymous) { auth.signOut(); alert('এই অ্যাকাউন্টের এডমিন অনুমতি নেই।'); }
+                adminLoaded = false;
+                clearTimeout(idleTimer);
+                generatedQuestionsData = [];
+                showAdmin(false);
+            }
+        });
+
+        function switchAdminTab(type) {
+            const stu = type === 'students';
+            $('tabStudentsSection').classList.toggle('hidden', !stu);
+            $('tabAiSection').classList.toggle('hidden', stu);
+            $('tabStudentsBtn').className = 'flex-1 py-2 text-xs font-bold rounded-lg ' + (stu ? 'bg-white text-blue-600 shadow' : 'text-slate-600');
+            $('tabAiBtn').className = 'flex-1 py-2 text-xs font-bold rounded-lg ' + (stu ? 'text-slate-600' : 'bg-white text-blue-600 shadow');
+        }
+
         // ---------------------------------------------------------------
-        // পেমেন্ট রিকোয়েস্ট
+        // পেমেন্ট / TrxID ম্যানেজমেন্ট
         // ---------------------------------------------------------------
-        function loadStudents() {
+        function loadPayments() {
             const list = $('studentList');
-            db.collection('students').get().then(snapshot => {
-                let html = "";
-                snapshot.forEach(doc => {
-                    const data = doc.data();
+            db.collection('payments').get().then(snapshot => {
+                const rows = snapshot.docs.map(d => Object.assign({ _id: d.id }, d.data()));
+                rows.sort((a, b) => (b.createdAt ? b.createdAt.toMillis() : 0) - (a.createdAt ? a.createdAt.toMillis() : 0));
+                let html = '';
+                rows.forEach(data => {
                     const status = data.status || 'pending';
                     const color = status === 'approved' ? 'text-green-600' : (status === 'rejected' ? 'text-red-600' : 'text-amber-600');
+                    const usage = data.finished
+                        ? `<span class="text-slate-500">পরীক্ষা শেষ${data.score !== undefined ? ' (' + bn(data.score) + '/' + bn(data.total) + ')' : ''}</span>`
+                        : (data.claimedBy ? '<span class="text-orange-600">পরীক্ষা শুরু হয়েছে (শেষ হয়নি)</span>' : '<span class="text-slate-400">অব্যবহৃত</span>');
+                    const resetBtn = (data.claimedBy && !data.finished)
+                        ? `<button onclick="resetClaim('${esc(data._id)}')" class="bg-slate-500 text-white text-xs px-3 py-1.5 rounded-lg">রিসেট</button>` : '';
                     html += `
-                        <div class="border p-4 rounded-xl flex items-center justify-between bg-slate-50 shadow-sm">
+                        <div class="border p-4 rounded-xl bg-slate-50 shadow-sm space-y-2">
                             <div>
                                 <h3 class="font-bold text-sm text-slate-800">${esc(data.name || 'নাম নেই')} <span class="${color}">(${esc(status)})</span></h3>
-                                <p class="text-xs text-slate-600">ফোন: ${esc(data.phone || doc.id)}</p>
-                                <p class="text-xs text-blue-600 font-mono">TrxID: ${esc(data.trxId || 'নেই')}</p>
+                                <p class="text-xs text-slate-600">ফোন: ${esc(data.phone || '')}</p>
+                                <p class="text-xs text-blue-600 font-mono">TrxID: ${esc(data._id)}</p>
+                                <p class="text-[11px]">${usage}</p>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="updateStatus('${esc(doc.id)}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
-                                <button onclick="updateStatus('${esc(doc.id)}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="updateStatus('${esc(data._id)}', 'approved')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Approve</button>
+                                <button onclick="updateStatus('${esc(data._id)}', 'rejected')" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg">Reject</button>
+                                ${resetBtn}
+                                <button onclick="deletePayment('${esc(data._id)}')" class="bg-white border border-red-300 text-red-600 text-xs px-3 py-1.5 rounded-lg">মুছুন</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
                 list.innerHTML = html || "<p class='text-xs text-slate-500'>কোনো আবেদন নেই।</p>";
+            }).catch(err => {
+                list.innerHTML = `<p class="text-xs text-red-600">লোড করা যায়নি: ${esc(err.message)}</p>`;
             });
         }
 
         function updateStatus(docId, status) {
-            db.collection('students').doc(docId).update({ status: status }).then(() => loadStudents());
+            db.collection('payments').doc(docId).update({ status: status }).then(() => loadPayments())
+                .catch(err => alert('আপডেট করা যায়নি: ' + err.message));
+        }
+
+        function resetClaim(docId) {
+            if (!confirm('শিক্ষার্থী পরীক্ষা শুরু করে শেষ করতে পারেনি। এই TrxID-টি আবার ব্যবহারযোগ্য করবেন?')) return;
+            const FV = firebase.firestore.FieldValue;
+            db.collection('payments').doc(docId).update({ claimedBy: FV.delete(), claimedAt: FV.delete() })
+                .then(() => loadPayments()).catch(err => alert('রিসেট করা যায়নি: ' + err.message));
+        }
+
+        function deletePayment(docId) {
+            if (!confirm('এই আবেদনটি মুছে ফেলবেন? মুছলে এই TrxID আবার জমা দেওয়া যাবে।')) return;
+            db.collection('payments').doc(docId).delete().then(() => loadPayments())
+                .catch(err => alert('মুছতে সমস্যা: ' + err.message));
         }
 
         // ---------------------------------------------------------------
@@ -271,9 +343,10 @@
         // ---------------------------------------------------------------
         const EXCLUDE_RE = /(tts|image|live|embed|audio|robotics|computer|omni|transcribe|veo|lyria|imagen|banana|research|learnlm|gemma|aqa|antigravity|translate)/i;
 
+        // Key শুধু এই ট্যাবের সেশনে থাকে (sessionStorage)
         function initApiKey() {
             try {
-                const k = localStorage.getItem('gemini_api_key');
+                const k = sessionStorage.getItem('gemini_api_key');
                 if (k) {
                     $('geminiApiKey').value = k;
                     $('rememberKey').checked = true;
@@ -285,14 +358,13 @@
         function persistApiKey() {
             try {
                 if ($('rememberKey').checked && $('geminiApiKey').value.trim()) {
-                    localStorage.setItem('gemini_api_key', $('geminiApiKey').value.trim());
+                    sessionStorage.setItem('gemini_api_key', $('geminiApiKey').value.trim());
                 } else {
-                    localStorage.removeItem('gemini_api_key');
+                    sessionStorage.removeItem('gemini_api_key');
                 }
             } catch (e) { /* ignore */ }
         }
 
-        // বড় সংস্করণ + flash (লাইট/প্রিভিউ নয়) আগে
         function modelRank(name) {
             const m = name.match(/^gemini-(\d+)(?:\.(\d+))?-(flash|pro)(-lite)?(-preview.*)?$/i);
             if (!m) return /-latest$/.test(name) ? 1 : 0;
@@ -593,7 +665,7 @@ Return only the JSON array.`;
                 } catch (err) {
                     lastErr = err;
                     if (err.name === 'AbortError') throw new Error('বন্ধ করা হয়েছে।');
-                    if (err instanceof TypeError) err.retryable = true;   // নেটওয়ার্ক সমস্যা
+                    if (err instanceof TypeError) err.retryable = true;
                     if (!err.retryable || attempt === delays.length) throw err;
                     await sleep(delays[attempt]);
                 }
@@ -729,7 +801,7 @@ Return only the JSON array.`;
             cancelRequested = false;
             setBusy(true);
             progress = rows.map((r, i) => ({
-                label: (i + 1 > 0 ? bn(i + 1) + '. ' : '') + (r.chapter.trim() || 'সব অধ্যায়'),
+                label: bn(i + 1) + '. ' + (r.chapter.trim() || 'সব অধ্যায়'),
                 text: 'অপেক্ষায়...', cls: 'text-slate-400'
             }));
             renderProgress();
@@ -762,7 +834,6 @@ Return only the JSON array.`;
                 renderProgress();
             }
 
-            // একই প্রশ্ন একাধিকবার এলে বাদ
             const seen = new Set();
             collected = collected.filter(q => {
                 const k = q.q.replace(/\s+/g, '');
@@ -874,7 +945,6 @@ Return only the JSON array.`;
             const title = $('subjectTitle').value.trim();
             if (!title) return alert('"পরীক্ষার বিষয়ের নাম" ঘরটি পূরণ করুন (যেমন: রসায়ন)।');
 
-            // প্রতিটি প্রশ্ন যাচাই
             const problems = [];
             generatedQuestionsData.forEach((q, i) => {
                 if (!String(q.q).trim()) problems.push(`প্রশ্ন ${bn(i + 1)}: প্রশ্ন খালি`);
@@ -959,11 +1029,14 @@ Return only the JSON array.`;
                     `;
                 });
                 list.innerHTML = html;
+            }).catch(err => {
+                list.innerHTML = `<p class="text-xs text-red-600">লোড করা যায়নি: ${esc(err.message)}</p>`;
             });
         }
 
         function togglePublish(id, currentlyPublished) {
-            db.collection('exams').doc(id).update({ published: !currentlyPublished }).then(() => loadExams());
+            db.collection('exams').doc(id).update({ published: !currentlyPublished }).then(() => loadExams())
+                .catch(err => alert('আপডেট করা যায়নি: ' + err.message));
         }
 
         async function editExam(id) {
@@ -990,7 +1063,8 @@ Return only the JSON array.`;
 
         function deleteExam(id) {
             if (confirm("আপনি কি এই বিষয়টি মুছে ফেলতে চান?")) {
-                db.collection('exams').doc(id).delete().then(() => loadExams());
+                db.collection('exams').doc(id).delete().then(() => loadExams())
+                    .catch(err => alert('মুছতে সমস্যা: ' + err.message));
             }
         }
 
