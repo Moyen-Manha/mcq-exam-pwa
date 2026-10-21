@@ -304,6 +304,7 @@
                                 <h3 class="font-bold text-sm text-slate-800">${esc(data.name || 'নাম নেই')} <span class="${color}">(${esc(status)})</span></h3>
                                 <p class="text-xs text-slate-600">ফোন: ${esc(data.phone || '')}</p>
                                 <p class="text-xs text-blue-600 font-mono">TrxID: ${esc(data._id)}</p>
+                                <p class="text-[11px] text-emerald-700">বিষয়: ${esc(Array.isArray(data.subjects) ? data.subjects.map(x => String(x).replace(/_/g, ' ')).join(', ') : 'বাছাই করা নেই')}</p>
                                 <p class="text-[11px]">${usage}</p>
                             </div>
                             <div class="flex flex-wrap gap-2">
@@ -999,9 +1000,27 @@ Return only the JSON array.`;
         // ---------------------------------------------------------------
         // সেভ থাকা বিষয়ের তালিকা
         // ---------------------------------------------------------------
+        // পেমেন্ট পেজে বিষয়ের নাম দেখানোর জন্য প্রশ্ন ছাড়া হালকা পাবলিক তালিকা (catalog) আপডেট রাখা হয়
+        async function writeCatalog(snapshot) {
+            try {
+                const col = db.collection('catalog');
+                const old = await col.get();
+                const batch = db.batch();
+                const ids = new Set();
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    ids.add(doc.id);
+                    batch.set(col.doc(doc.id), { title: d.title || '', timeLimit: d.timeLimit || 25, published: d.published !== false });
+                });
+                old.forEach(doc => { if (!ids.has(doc.id)) batch.delete(doc.ref); });
+                await batch.commit();
+            } catch (err) { console.warn('catalog sync failed', err); }
+        }
+
         function loadExams() {
             const list = $('examList');
             db.collection('exams').get().then(snapshot => {
+                writeCatalog(snapshot);
                 if (snapshot.empty) {
                     list.innerHTML = "<p class='text-xs text-slate-400'>ডাটাবেজে কোনো বিষয় সেভ নেই।</p>";
                     return;
