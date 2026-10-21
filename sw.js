@@ -1,5 +1,5 @@
 // আপডেট দিলে এই ভার্সন নম্বর বাড়ান (v2 -> v3), তাহলে পুরনো ক্যাশ মুছে নতুন কোড লোড হবে
-const CACHE_NAME = 'mcq-pwa-v2';
+const CACHE_NAME = 'mcq-pwa-v3';
 
 // রিলেটিভ পাথ — GitHub Pages সাব-ফোল্ডারেও কাজ করবে
 const APP_SHELL = [
