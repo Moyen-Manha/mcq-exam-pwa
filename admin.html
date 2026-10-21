@@ -227,9 +227,24 @@
                 await auth.signInWithEmailAndPassword(email, pass);
                 failCount = 0;
             } catch (err) {
-                failCount++;
-                if (failCount >= 5) { lockUntil = Date.now() + 60000; failCount = 0; }
-                alert('লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড ভুল, অথবা অনেকবার চেষ্টা করা হয়েছে।');
+                const code = (err && err.code) || 'unknown';
+                console.error('Admin login error:', err);
+                const cred = ['auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-email'];
+                if (cred.includes(code)) {
+                    failCount++;
+                    if (failCount >= 5) { lockUntil = Date.now() + 60000; failCount = 0; }
+                }
+                const msgs = {
+                    'auth/operation-not-allowed': 'Firebase-এ Email/Password সাইন-ইন চালু করা নেই। Authentication → Sign-in method থেকে চালু করুন।',
+                    'auth/too-many-requests': 'অনেকবার ভুল চেষ্টার কারণে Firebase সাময়িক আটকে দিয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।',
+                    'auth/network-request-failed': 'ইন্টারনেট সংযোগে সমস্যা। আবার চেষ্টা করুন।',
+                    'auth/unauthorized-domain': 'এই ওয়েবসাইটের ডোমেইন Firebase-এর Authorized domains-এ যোগ করা নেই।',
+                    'auth/user-disabled': 'এই অ্যাকাউন্ট বন্ধ করা আছে।'
+                };
+                const reason = cred.includes(code)
+                    ? 'ইমেইল বা পাসওয়ার্ড মেলেনি, অথবা এই ইমেইলে Firebase-এ কোনো ইউজার তৈরি করা নেই।'
+                    : (msgs[code] || 'অজানা সমস্যা।');
+                alert('লগইন ব্যর্থ: ' + reason + '\n\n(কোড: ' + code + ')');
             } finally {
                 $('adminPass').value = '';
                 $('btnLogin').disabled = false;
