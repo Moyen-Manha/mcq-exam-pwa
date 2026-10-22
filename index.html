@@ -14,7 +14,14 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Hind Siliguri', sans-serif; }</style>
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; }
+        @media print {
+            header, .no-print { display: none !important; }
+            body { background: #fff !important; }
+            #mainWrap { max-width: 100% !important; padding: 0 !important; }
+        }
+    </style>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -29,7 +36,7 @@
         </div>
     </header>
 
-    <main class="max-w-md mx-auto w-full px-4 py-6 flex-grow">
+    <main id="mainWrap" class="max-w-md mx-auto w-full px-4 py-6 flex-grow">
 
         <div id="authTabs" class="flex bg-slate-200 p-1 rounded-xl mb-6">
             <button onclick="switchTab('pay')" id="tabPay" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-blue-600">নতুন পেমেন্ট</button>
@@ -68,8 +75,17 @@
                         <div id="paySubjects" class="space-y-2"><p class="text-xs text-slate-400">বিষয় লোড হচ্ছে...</p></div>
                     </div>
                     <input type="text" id="userName" required maxlength="60" placeholder="আপনার নাম" class="w-full p-2.5 border rounded-xl text-sm">
-                    <input type="text" id="userName" required maxlength="60" placeholder="আপনার বিদ্যালয়ের নাম" class="w-full p-2.5 border rounded-xl text-sm">
                     <input type="tel" id="userPhone" required maxlength="11" placeholder="মোবাইল নম্বর (যেমন: 01XXXXXXXXX)" class="w-full p-2.5 border rounded-xl text-sm">
+                    <input type="text" id="userSchool" maxlength="80" placeholder="বিদ্যালয়ের নাম (ঐচ্ছিক)" class="w-full p-2.5 border rounded-xl text-sm">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="userRoll" maxlength="10" placeholder="রোল (ঐচ্ছিক)" class="w-full p-2.5 border rounded-xl text-sm">
+                        <select id="userBranch" class="w-full p-2.5 border rounded-xl text-sm bg-white">
+                            <option value="">শাখা (ঐচ্ছিক)</option>
+                            <option value="বিজ্ঞান">বিজ্ঞান</option>
+                            <option value="ব্যবসায় শিক্ষা">ব্যবসায় শিক্ষা</option>
+                            <option value="মানবিক">মানবিক</option>
+                        </select>
+                    </div>
                     <input type="text" id="trxId" required maxlength="20" placeholder="TrxID" autocapitalize="characters" class="w-full p-2.5 border rounded-xl text-sm uppercase">
                     <button type="submit" id="btnPay" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm">সাবমিট করুন</button>
                 </form>
@@ -91,8 +107,9 @@
         <div id="examDashboard" class="hidden space-y-4">
             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                 <h2 id="welcomeText" class="font-bold text-slate-900 text-lg">মডেল টেস্ট - ২০২৭</h2>
-                <p class="text-xs text-emerald-600 font-bold mt-1">আপনার বেছে নেওয়া ৩টি বিষয়:</p>
-                <p class="text-[11px] text-red-600 mt-1">এই TrxID দিয়ে ৩টি বিষয়ের পরীক্ষা একসাথে একবারই দেওয়া যাবে।</p>
+                <p class="text-xs text-emerald-600 font-bold mt-1">আপনার বেছে নেওয়া ৩টি বিষয় (৩টি সেট):</p>
+                <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">প্রতিটি সেটের আলাদা সময়। উত্তর না দিলেও জমা দিতে পারবেন, আর সময় শেষ হলে সেট নিজে থেকে জমা হয়ে পরের সেটের জন্য প্রস্তুত হবে।</p>
+                <p class="text-[11px] text-red-600 mt-1">এই TrxID দিয়ে শুধু একবারই পরীক্ষা দেওয়া যাবে। পরীক্ষা চলাকালীন পেজ রিফ্রেশ করবেন না।</p>
             </div>
 
             <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">
@@ -106,50 +123,28 @@
             </button>
         </div>
 
-        <!-- Live MCQ Exam -->
-        <div id="mcqScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div class="flex justify-between items-center pb-4 mb-4 border-b border-slate-100">
-                <div>
-                    <span id="questionCount" class="text-xs font-bold text-blue-600 block">প্রশ্ন ১/১</span>
-                    <span id="activeSubjectTitle" class="text-xs text-slate-500 font-medium">পরীক্ষা</span>
-                </div>
-                <span id="timerText" class="text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100">⏱️ 00:00</span>
-            </div>
-            <div id="questionContainer" class="space-y-4"></div>
-            <button onclick="nextQuestion()" class="w-full mt-6 bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition text-sm">
-                পরবর্তী প্রশ্ন
-            </button>
-        </div>
-
-        <!-- Result -->
-        <div id="resultScreen" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100 text-center">
-            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">🏆</div>
-            <h2 class="text-2xl font-bold text-slate-900">পরীক্ষা সম্পন্ন!</h2>
-            <div class="bg-slate-50 p-4 rounded-xl my-6">
-                <span class="text-xs text-slate-500 block mb-1">প্রাপ্ত নম্বর</span>
-                <span id="scoreText" class="text-3xl font-extrabold text-blue-600">০/০</span>
-            </div>
-            <button onclick="location.reload()" class="w-full bg-slate-900 text-white font-semibold py-3 rounded-xl text-sm">প্রথম পাতায় ফিরুন</button>
-        </div>
+        <!-- Exam / Result area (set based) -->
+        <div id="examArea" class="hidden space-y-4"></div>
 
     </main>
 
     <script>
         const firebaseConfig = {
-  apiKey: "AIzaSyBbN4F7Ys23miaMZzR9Xf8NCgBahsTw6BI",
-  authDomain: "mcqexm.firebaseapp.com",
-  projectId: "mcqexm",
-  storageBucket: "mcqexm.firebasestorage.app",
-  messagingSenderId: "232482881612",
-  appId: "1:232482881612:web:dc976b8f66e03c2480b4e9",
-  measurementId: "G-5W6KJQZWW8"
-};
+            apiKey: "AIzaSyBbN4F7Ys23miaMZZR9Xf8NCgBahsTw6BI",
+            authDomain: "mcqexm.firebaseapp.com",
+            projectId: "mcqexm",
+            storageBucket: "mcqexm.firebasestorage.app",
+            messagingSenderId: "232482881612",
+            appId: "1:232482881612:web:dc976b8f66e03c2480b4e9",
+            measurementId: "G-5W6KJQZWW8"
+        };
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
         const TS = () => firebase.firestore.FieldValue.serverTimestamp();
         const SUBJECT_LIMIT = 3;
+        const OPT = ['ক', 'খ', 'গ', 'ঘ'];
 
         // ---------- হেল্পার ----------
         const $ = (id) => document.getElementById(id);
@@ -162,6 +157,9 @@
         function en(s) { return String(s || '').replace(/[০-৯]/g, d => '০১২৩৪৫৬৭৮৯'.indexOf(d)); }
         function normPhone(s) { return en(s).replace(/\s+/g, '').replace(/^\+?88/, ''); }
         function normTrx(s) { return en(s).toUpperCase().replace(/[\s\-]/g, ''); }
+        function stripLabel(s) { return String(s || '').replace(/^\s*[\(\[]?\s*[কখগঘ]\s*[\)\]\.।:]\s*/, '').trim(); }
+        function fmtNum(n) { n = Number(n) || 0; return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+        function fmtTime(sec) { return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); }
         const PHONE_RE = /^01[0-9]{9}$/;
         const TRX_RE = /^[A-Z0-9]{6,20}$/;
 
@@ -178,12 +176,9 @@
             const done = () => { btn.textContent = 'কপি হয়েছে ✓'; setTimeout(() => { btn.textContent = 'কপি'; }, 1500); };
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(num).then(done).catch(() => alert('নম্বর: ' + num));
-            } else {
-                alert('নম্বর: ' + num);
-            }
+            } else { alert('নম্বর: ' + num); }
         }
 
-        // শিক্ষার্থী বেনামী (anonymous) সেশনে চলে। অ্যাডমিন সেশন থাকলে সেটি বাদ দেওয়া হয়।
         function getInitialUser() {
             return new Promise(resolve => {
                 const off = auth.onAuthStateChanged(u => { off(); resolve(u); });
@@ -196,7 +191,7 @@
             return u;
         }
 
-        // ---------- পেমেন্টের সময় বিষয় বাছাই (পাবলিক ক্যাটালগ থেকে) ----------
+        // ---------- পেমেন্টের সময় বিষয় বাছাই ----------
         async function loadCatalog() {
             const box = $('paySubjects');
             try {
@@ -218,7 +213,6 @@
             }
         }
 
-        // ৩টি বাছাই হলে বাকিগুলো বন্ধ হয়ে যায়
         function limitSubjects() {
             const all = Array.from(document.querySelectorAll('.pay-subject'));
             const checked = all.filter(c => c.checked).length;
@@ -238,6 +232,9 @@
             const name = $('userName').value.trim();
             const phone = normPhone($('userPhone').value);
             const trx = normTrx($('trxId').value);
+            const school = $('userSchool').value.trim();
+            const roll = $('userRoll').value.trim();
+            const branch = $('userBranch').value;
             const subjects = Array.from(document.querySelectorAll('.pay-subject:checked')).map(c => c.value);
 
             if (subjects.length !== SUBJECT_LIMIT) return alert('ঠিক ' + bn(SUBJECT_LIMIT) + 'টি বিষয় বেছে নিন।');
@@ -254,7 +251,11 @@
                     alert('এই TrxID আগেই জমা দেওয়া হয়েছে। একই TrxID দ্বিতীয়বার ব্যবহার করা যাবে না।');
                     return;
                 }
-                await ref.set({ name: name, phone: phone, trxId: trx, subjects: subjects, status: 'pending', createdAt: TS() });
+                const payload = { name: name, phone: phone, trxId: trx, subjects: subjects, status: 'pending', createdAt: TS() };
+                if (school) payload.school = school;
+                if (roll) payload.roll = roll;
+                if (branch) payload.branch = branch;
+                await ref.set(payload);
                 alert('পেমেন্ট জমা হয়েছে! অ্যাডমিন অনুমোদন করলে লগইন করে পরীক্ষা দিতে পারবেন।');
                 $('loginPhone').value = phone;
                 $('loginTrx').value = trx;
@@ -272,6 +273,7 @@
 
         // ---------- লগইন ----------
         let currentPaymentId = null;
+        let currentPayment = null;
         let allExamsData = {};
 
         async function handleLogin(e) {
@@ -297,22 +299,21 @@
 
                 const sessRef = db.collection('sessions').doc(user.uid);
                 if (!d.claimedBy) {
-                    // প্রথমবার: TrxID-টি এই শিক্ষার্থীর নামে লক করা হয়
                     const batch = db.batch();
                     batch.update(ref, { claimedBy: user.uid, claimedAt: TS() });
                     batch.set(sessRef, { paymentId: trx, createdAt: TS() });
                     await batch.commit();
                 } else {
-                    // একই ডিভাইসে পেজ রিলোড হলে আবার চালিয়ে যাওয়া
                     await sessRef.set({ paymentId: trx, createdAt: TS() });
                 }
 
                 currentPaymentId = trx;
+                currentPayment = d;
                 $('welcomeText').textContent = (d.name ? d.name + ' – ' : '') + 'মডেল টেস্ট ২০২৭';
                 $('authTabs').classList.add('hidden');
                 $('loginSection').classList.add('hidden');
                 $('examDashboard').classList.remove('hidden');
-                loadMySubjects(d.subjects);
+                loadMySubjects(d.subjects, d.progress);
             } catch (err) {
                 alert('লগইন করা যায়নি। আবার চেষ্টা করুন। (' + (err.code || err.message) + ')');
             } finally {
@@ -320,21 +321,27 @@
             }
         }
 
-        // শুধু পেমেন্টে বেছে নেওয়া ৩টি বিষয়ের প্রশ্ন লোড হয়
-        async function loadMySubjects(ids) {
+        async function loadMySubjects(ids, progress) {
             const container = $('subjectCheckboxContainer');
             allExamsData = {};
             try {
                 const snaps = await Promise.all(ids.map(id => db.collection('exams').doc(id).get()));
-                let html = '';
                 snaps.forEach(s => {
                     if (!s.exists) return;
                     const data = s.data();
                     if (data.published === false) return;
                     allExamsData[s.id] = data;
+                });
+                const doneIds = (progress || []).map(p => p.id);
+                let html = '', n = 0;
+                ids.forEach(id => {
+                    const data = allExamsData[id];
+                    if (!data) return;
+                    n++;
+                    const done = doneIds.includes(id);
                     html += `
                         <div class="flex items-center justify-between p-3.5 bg-white border border-emerald-100 rounded-xl shadow-sm">
-                            <span class="font-bold text-xs text-slate-800">✅ ${esc(data.title)}</span>
+                            <span class="font-bold text-xs text-slate-800">সেট ${n}: ${esc(data.title)} ${done ? '<span class="text-emerald-600">✓ সম্পন্ন</span>' : ''}</span>
                             <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">${esc(bn(data.timeLimit || 25))} মিনিট</span>
                         </div>`;
                 });
@@ -352,97 +359,270 @@
             return array;
         }
 
-        // ---------- পরীক্ষা ----------
-        let currentQuestions = [];
-        let currentQIndex = 0, obtainedScore = 0;
-        let timerInterval, totalSeconds = 0, finished = false;
+        // ---------- সেট ভিত্তিক পরীক্ষা ----------
+        let sets = [];          // প্রতিটি বিষয় = একটি সেট
+        let activeIdx = -1;     // এখন চলমান সেট
+        let viewIdx = 0;        // এখন যে সেট দেখা হচ্ছে
+        let timerInterval = null;
+        let finishedAll = false;
+
+        function buildSets() {
+            const done = (currentPayment && currentPayment.progress) || [];
+            sets = [];
+            currentPayment.subjects.forEach(id => {
+                const ex = allExamsData[id];
+                if (!ex) return;
+                const marks = Number(ex.marksPerQ) || 1;
+                const qs = shuffleArray((Array.isArray(ex.questions) ? ex.questions : []).slice());
+                const prev = done.find(p => p.id === id);
+                sets.push({
+                    id: id, title: ex.title, timeLimit: ex.timeLimit || 25, marks: marks, questions: qs,
+                    answers: [], status: prev ? 'done' : 'pending',
+                    score: prev ? Number(prev.score) || 0 : 0,
+                    totalMarks: prev ? Number(prev.total) || qs.length * marks : qs.length * marks,
+                    correct: 0, detail: !prev, auto: false, endAt: 0
+                });
+            });
+        }
 
         function startMultiExam() {
-            const exams = Object.values(allExamsData);
-            if (!exams.length) return alert('পরীক্ষার বিষয় লোড হয়নি!');
+            buildSets();
+            if (!sets.length) return alert('পরীক্ষার বিষয় লোড হয়নি!');
+            if (sets.some(s => s.status === 'pending' && s.questions.length === 0)) return alert('কোনো বিষয়ে প্রশ্ন নেই। অ্যাডমিনের সাথে যোগাযোগ করুন।');
 
-            currentQuestions = [];
-            totalSeconds = 0;
-            const titles = [];
-
-            exams.forEach(exam => {
-                if (Array.isArray(exam.questions)) {
-                    currentQuestions.push(...exam.questions);
-                    totalSeconds += (exam.timeLimit || 25) * 60;
-                    titles.push(exam.title);
-                }
-            });
-
-            if (currentQuestions.length === 0) return alert('এই বিষয়গুলোতে প্রশ্ন নেই!');
-
-            currentQuestions = shuffleArray(currentQuestions);
-            currentQIndex = 0; obtainedScore = 0; finished = false;
-            $('activeSubjectTitle').textContent = titles.join(', ');
+            $('mainWrap').classList.replace('max-w-md', 'max-w-2xl');
             $('examDashboard').classList.add('hidden');
-            $('mcqScreen').classList.remove('hidden');
+            $('examArea').classList.remove('hidden');
+            window.onbeforeunload = (ev) => { ev.preventDefault(); ev.returnValue = ''; };
 
-            startTimer();
-            renderQuestion();
+            const next = sets.findIndex(s => s.status === 'pending');
+            if (next === -1) {
+                viewIdx = sets.length - 1;
+                finishAll();
+                renderExam();
+            } else {
+                startSet(next);
+            }
         }
 
-        function startTimer() {
+        function startSet(i) {
+            const s = sets[i];
+            s.status = 'active';
+            s.endAt = Date.now() + s.timeLimit * 60000;
+            activeIdx = i;
+            viewIdx = i;
             clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                totalSeconds--;
-                const t = Math.max(totalSeconds, 0);
-                $('timerText').innerText = `⏱️ ${Math.floor(t / 60).toString().padStart(2, '0')}:${(t % 60).toString().padStart(2, '0')}`;
-                if (totalSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    alert('সময় শেষ!');
-                    showResult();
-                }
-            }, 1000);
+            timerInterval = setInterval(tick, 500);
+            renderExam();
+            window.scrollTo(0, 0);
         }
 
-        function renderQuestion() {
-            const q = currentQuestions[currentQIndex];
-            $('questionCount').innerText = `প্রশ্ন ${currentQIndex + 1}/${currentQuestions.length}`;
-            let html = `<h3 class="font-bold text-slate-800 mb-3 text-xs leading-relaxed whitespace-pre-line">${esc(q.q)}</h3><div class="space-y-2">`;
-            q.options.forEach((opt, idx) => {
-                html += `<label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
-                    <input type="radio" name="option" value="${idx}"> <span class="text-xs text-slate-700">${esc(opt)}</span>
-                </label>`;
-            });
-            $('questionContainer').innerHTML = html + `</div>`;
+        function remainingSec(s) { return Math.max(0, Math.ceil((s.endAt - Date.now()) / 1000)); }
+
+        function tick() {
+            const s = sets[activeIdx];
+            if (!s || s.status !== 'active') { clearInterval(timerInterval); return; }
+            const rem = remainingSec(s);
+            const el = $('timerText');
+            if (el && viewIdx === activeIdx) el.textContent = fmtTime(rem);
+            if (rem <= 0) submitSet(true);
         }
 
-        function nextQuestion() {
-            const selected = document.querySelector('input[name="option"]:checked');
-            if (!selected) return alert('উত্তর বেছে নিন!');
-            if (parseInt(selected.value, 10) === currentQuestions[currentQIndex].ans) obtainedScore++;
-            currentQIndex++;
-            if (currentQIndex < currentQuestions.length) renderQuestion();
-            else showResult();
+        function setAnswer(qi, oi) {
+            const s = sets[activeIdx];
+            if (s && s.status === 'active') s.answers[qi] = oi;
         }
 
-        // পরীক্ষা শেষে TrxID "ব্যবহৃত" চিহ্নিত হয় এবং প্রশ্ন পড়ার অনুমতি বন্ধ হয়
-        async function markFinished() {
+        function viewSet(i) {
+            if (!sets[i] || sets[i].status === 'pending') return;
+            viewIdx = i;
+            renderExam();
+            window.scrollTo(0, 0);
+        }
+
+        async function submitSet(auto) {
+            const i = activeIdx;
+            const s = sets[i];
+            if (!s || s.status !== 'active') return;
+            if (!auto) {
+                const unanswered = s.questions.length - s.questions.filter((_, qi) => s.answers[qi] !== undefined && s.answers[qi] !== null).length;
+                if (unanswered > 0 && !confirm('আপনি ' + unanswered + 'টি প্রশ্নের উত্তর দেননি। তবুও জমা দেবেন?')) return;
+            }
+            clearInterval(timerInterval);
+            let correct = 0;
+            s.questions.forEach((q, qi) => { if (s.answers[qi] === q.ans) correct++; });
+            s.correct = correct;
+            s.score = correct * s.marks;
+            s.status = 'done';
+            s.auto = !!auto;
+            s.detail = true;
+            activeIdx = -1;
+            viewIdx = i;
+            renderExam();
+            window.scrollTo(0, 0);
+
+            await saveProgress();
+            if (!sets.some(x => x.status === 'pending')) await finishAll();
+        }
+
+        async function saveProgress() {
+            try {
+                await db.collection('payments').doc(currentPaymentId).update({
+                    progress: sets.filter(s => s.status === 'done').map(s => ({ id: s.id, score: s.score, total: s.totalMarks }))
+                });
+            } catch (err) { console.warn(err); }
+        }
+
+        async function finishAll() {
+            if (finishedAll) return;
+            finishedAll = true;
+            window.onbeforeunload = null;
+            renderExam();
             try {
                 const user = auth.currentUser;
-                if (!user || !currentPaymentId) return;
+                if (!user) return;
                 await db.collection('payments').doc(currentPaymentId).update({
                     finished: true,
                     finishedAt: TS(),
-                    score: obtainedScore,
-                    total: currentQuestions.length
+                    score: sets.reduce((a, s) => a + s.score, 0),
+                    total: sets.reduce((a, s) => a + s.totalMarks, 0)
                 });
                 await db.collection('sessions').doc(user.uid).delete();
             } catch (err) { console.warn(err); }
         }
 
-        function showResult() {
-            if (finished) return;
-            finished = true;
-            clearInterval(timerInterval);
-            $('mcqScreen').classList.add('hidden');
-            $('resultScreen').classList.remove('hidden');
-            $('scoreText').innerText = `${obtainedScore}/${currentQuestions.length}`;
-            markFinished();
+        // ---------- রেন্ডার ----------
+        function renderExam() {
+            if (!sets.length) return;
+            const tabs = sets.map((st, i) => {
+                let cls;
+                if (i === viewIdx) cls = 'bg-[#0f7b66] text-white';
+                else if (st.status === 'done') cls = 'bg-green-100 text-green-800';
+                else if (st.status === 'active') cls = 'bg-amber-100 text-amber-800';
+                else cls = 'bg-slate-200 text-slate-500';
+                return `<button ${st.status === 'pending' ? 'disabled' : ''} onclick="viewSet(${i})" class="py-2 text-xs font-bold rounded-lg ${cls}">সেট ${i + 1}</button>`;
+            }).join('');
+            const s = sets[viewIdx];
+            $('examArea').innerHTML =
+                `<div class="grid grid-cols-${sets.length} gap-2 no-print">${tabs}</div>` +
+                (s.status === 'active' ? examHtml(s, viewIdx) : resultHtml(s, viewIdx));
+        }
+
+        function examHtml(s, i) {
+            const qHtml = s.questions.map((q, qi) => `
+                <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+                    <h3 class="font-bold text-sm text-slate-800 whitespace-pre-line leading-relaxed">${qi + 1}. ${esc(q.q)}</h3>
+                    <div class="space-y-2">
+                        ${q.options.map((o, oi) => `
+                        <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 text-sm">
+                            <input type="radio" name="q${qi}" value="${oi}" ${s.answers[qi] === oi ? 'checked' : ''} onchange="setAnswer(${qi}, ${oi})">
+                            <span>${OPT[oi]}) ${esc(stripLabel(o))}</span>
+                        </label>`).join('')}
+                    </div>
+                </div>`).join('');
+            return `
+                <div class="sticky top-[56px] z-40 bg-[#0a5c4b] text-white rounded-xl p-4 flex justify-between items-center shadow-md">
+                    <div>
+                        <div class="font-bold text-sm">${esc(s.title)}</div>
+                        <div class="text-xs opacity-90">সেট ${i + 1}/${sets.length}</div>
+                    </div>
+                    <span id="timerText" class="text-xl font-bold">${fmtTime(remainingSec(s))}</span>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl p-5 text-xs text-slate-500">
+                    মোট ${s.questions.length}টি প্রশ্ন — প্রতিটি ${fmtNum(s.marks)} নম্বর — সময় শেষ হলে অটো জমা হয়ে যাবে
+                </div>
+                ${qHtml}
+                <div class="bg-white border border-slate-200 rounded-xl p-5">
+                    <button onclick="submitSet(false)" class="w-full bg-[#0f7b66] hover:bg-[#0a5c4b] text-white font-bold py-3 rounded-lg text-sm transition">উত্তর জমা দিন</button>
+                </div>`;
+        }
+
+        function studentInfo() {
+            const p = currentPayment || {};
+            return [p.name, p.school, p.roll ? 'রোল: ' + p.roll : '', p.branch ? 'শাখা: ' + p.branch : ''].filter(Boolean).join(' | ');
+        }
+
+        function reviewHtml(s) {
+            return s.questions.map((q, qi) => {
+                const a = s.answers[qi];
+                const answered = a !== undefined && a !== null;
+                const ok = a === q.ans;
+                const mine = answered ? OPT[a] + ') ' + esc(stripLabel(q.options[a])) : 'দেওয়া হয়নি';
+                const right = OPT[q.ans] + ') ' + esc(stripLabel(q.options[q.ans]));
+                const box = ok ? 'bg-green-50 border-green-300 border-l-green-600' : 'bg-red-50 border-red-300 border-l-red-600';
+                const badge = ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                return `
+                <div class="border border-l-4 rounded-lg p-4 space-y-1 ${box}">
+                    <div class="font-bold text-sm text-slate-800 whitespace-pre-line">${qi + 1}. ${esc(q.q)}
+                        <span class="text-[11px] px-2 py-0.5 rounded-full font-bold ${badge}">${ok ? 'সঠিক' : 'ভুল'}</span></div>
+                    <div class="text-xs text-slate-500">আপনার উত্তর: ${mine}</div>
+                    <div class="text-sm font-semibold text-green-800">সঠিক উত্তর: ${right}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function resultHtml(s, i) {
+            const next = sets.findIndex(x => x.status === 'pending');
+            const allDone = !sets.some(x => x.status !== 'done');
+            const nextBtn = (activeIdx === -1 && next !== -1)
+                ? `<div class="bg-white border border-slate-200 rounded-xl p-5 no-print">
+                        <button onclick="startSet(${next})" class="w-full bg-[#0f7b66] hover:bg-[#0a5c4b] text-white font-bold py-3 rounded-lg text-sm transition">পরবর্তী সেট শুরু করুন (${esc(sets[next].title)})</button>
+                   </div>` : '';
+            const summary = allDone ? `
+                <div class="bg-white border border-slate-200 rounded-xl p-5 text-center space-y-2">
+                    <div class="text-2xl">🏆</div>
+                    <h3 class="font-bold text-lg text-slate-900">সব সেট সম্পন্ন!</h3>
+                    ${sets.map((x, k) => `<p class="text-xs text-slate-600">সেট ${k + 1} (${esc(x.title)}): <b>${fmtNum(x.score)} / ${fmtNum(x.totalMarks)}</b></p>`).join('')}
+                    <p class="text-sm font-bold text-[#0a5c4b]">মোট: ${fmtNum(sets.reduce((a, x) => a + x.score, 0))} / ${fmtNum(sets.reduce((a, x) => a + x.totalMarks, 0))}</p>
+                    <button onclick="location.reload()" class="no-print w-full bg-slate-900 text-white font-semibold py-3 rounded-lg text-sm mt-2">প্রথম পাতায় ফিরুন</button>
+                </div>` : '';
+            const detailBlock = s.detail
+                ? reviewHtml(s)
+                : `<div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-3">এই সেটের উত্তরপত্র আগের সেশনে জমা হয়েছিল, তাই বিস্তারিত দেখানো যাচ্ছে না। প্রাপ্ত নম্বর সংরক্ষিত আছে।</div>`;
+            return `
+                <div class="bg-white border border-slate-200 rounded-xl p-6 text-center space-y-2">
+                    <h2 class="font-bold text-lg text-[#0a5c4b]">${esc(s.title)}<br>সেট ${i + 1}/${sets.length} সম্পন্ন</h2>
+                    ${s.auto ? '<p class="text-[11px] text-amber-700">সময় শেষ হওয়ায় অটো জমা হয়েছে</p>' : ''}
+                    <p class="text-[11px] text-slate-500">${esc(studentInfo())}</p>
+                    <div class="text-4xl font-extrabold text-[#0a5c4b] py-2">${fmtNum(s.score)} / ${fmtNum(s.totalMarks)}</div>
+                    <p class="text-[11px] text-slate-500">মোট ${s.questions.length}টি প্রশ্নের মধ্যে${s.detail ? ' ' + s.correct + 'টি সঠিক' : ''}</p>
+                    <div class="space-y-2 pt-3 no-print">
+                        <button onclick="window.print()" class="w-full bg-[#0f7b66] hover:bg-[#0a5c4b] text-white font-bold py-3 rounded-lg text-sm transition">প্রিন্ট করুন (ব্রাউজার ডায়ালগ)</button>
+                        <button onclick="downloadResult(${i})" class="w-full bg-white border border-[#0f7b66] text-[#0f7b66] font-bold py-3 rounded-lg text-sm">ফাইল ডাউনলোড করুন (মোবাইলের জন্য)</button>
+                    </div>
+                </div>
+                ${detailBlock}
+                ${nextBtn}
+                ${summary}`;
+        }
+
+        // ---------- ফলাফল ফাইল ডাউনলোড (মোবাইলের জন্য) ----------
+        function downloadResult(i) {
+            const s = sets[i];
+            const items = s.detail ? s.questions.map((q, qi) => {
+                const a = s.answers[qi];
+                const answered = a !== undefined && a !== null;
+                const ok = a === q.ans;
+                return `<div style="border:1px solid ${ok ? '#86efac' : '#fca5a5'};border-left:5px solid ${ok ? '#16a34a' : '#dc2626'};background:${ok ? '#f0fdf4' : '#fef2f2'};border-radius:8px;padding:10px;margin:8px 0">
+<div style="font-weight:700;white-space:pre-line">${qi + 1}. ${esc(q.q)} <small>[${ok ? 'সঠিক' : 'ভুল'}]</small></div>
+<div style="font-size:13px;color:#555">আপনার উত্তর: ${answered ? OPT[a] + ') ' + esc(stripLabel(q.options[a])) : 'দেওয়া হয়নি'}</div>
+<div style="font-size:14px;color:#166534;font-weight:600">সঠিক উত্তর: ${OPT[q.ans]}) ${esc(stripLabel(q.options[q.ans]))}</div></div>`;
+            }).join('') : '';
+            const html = `<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ফলাফল - ${esc(s.title)}</title></head>
+<body style="font-family:sans-serif;max-width:720px;margin:auto;padding:16px">
+<h2 style="text-align:center;color:#0a5c4b">${esc(s.title)} — সেট ${i + 1}/${sets.length}</h2>
+<p style="text-align:center;color:#555;font-size:13px">${esc(studentInfo())}</p>
+<h1 style="text-align:center;color:#0a5c4b">${fmtNum(s.score)} / ${fmtNum(s.totalMarks)}</h1>
+${items}</body></html>`;
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'result-set' + (i + 1) + '.html';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
         }
 
         loadCatalog();
